@@ -7,7 +7,13 @@ public class Token implements IToken{
 	Kind kind;
 	String text;
 	
-	SourceLocation location;	
+	SourceLocation location;
+	
+	public Token(Kind kind, String text, int line, int col) {
+		this.kind = kind;
+		this.text = text;
+		location = new SourceLocation(line, col);
+	}
 	
 	@Override
 	public Kind getKind() {
