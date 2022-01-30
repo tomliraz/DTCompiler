@@ -20,7 +20,7 @@ public class Lexer implements ILexer {
 	final HashSet<String> color_const = new HashSet<>(Arrays.asList("BLACK", "BLUE", "CYAN", "DARK_GRAY",
 			"GRAY", "GREEN", "LIGHT_GRAY", "MAGENTA", "ORANGE", "PINK", "RED", "WHITE", "YELLOW"));
 	final HashSet<String> boolean_lit = new HashSet<>(Arrays.asList("true", "false"));
-	final HashSet<String> other_keywords = new HashSet<>(Arrays.asList("if", "else", "fi", "write", "console"));
+
 
 	public static enum State {
 		START, IN_IDENT, IS_ERROR
@@ -46,20 +46,23 @@ public class Lexer implements ILexer {
 					line++;
 				}
 			}
-			case IN_IDENT -> {
+			case IN_IDENT -> {  //handles both reserved and identifier tokens
 				if ((curr >= 'a' && curr <= 'z') || (curr >= 'A' && curr <= 'Z') || curr == '_' || curr == '$'
 						|| (curr >= '0' && curr <= '9')) {
 					text += curr;
 					line++;
 				} else {
-					tokens.add(new Token(Kind.IDENT, text, line, col));
+					tokens.add(new Token(checkReserved(text), text, line, col));
 					i--;
+					state = State.START;
 				}
 			}
+			/*
 			case HAVE_ZERO -> {
 			}
 			case HAVE_DOT -> {
 			}
+			*/
 			}
 		}
 	}
@@ -76,8 +79,29 @@ public class Lexer implements ILexer {
 		return null;
 	}
 
-	private IToken.Kind checkReserved() {
-
+	private IToken.Kind checkReserved(String input) {
+		if (type.contains(input)) {
+			return Kind.TYPE;
+		} else if (image_op.contains(input)) {
+			return Kind.IMAGE_OP;
+		} else if (color_op.contains(input)) {
+			return Kind.COLOR_OP;
+		} else if (color_const.contains(input)) {
+			return Kind.COLOR_CONST;
+		} else if (boolean_lit.contains(input)) {
+			return Kind.BOOLEAN_LIT;
+		} else if (input == "if") {
+			return Kind.KW_IF;
+		} else if (input == "fi") {
+			return Kind.KW_FI;
+		} else if (input == "else") {
+			return Kind.KW_ELSE;
+		} else if (input == "write") {
+			return Kind.KW_WRITE;
+		} else if (input == "console") {
+			return Kind.KW_CONSOLE;
+		}
+		return Kind.IDENT;
 	}
 
 }
