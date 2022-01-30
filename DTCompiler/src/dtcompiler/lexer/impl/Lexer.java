@@ -40,6 +40,7 @@ public class Lexer implements ILexer {
 			switch (state) {
 
 			case START -> {
+				text = "";
 				if ((curr >= 'a' && curr <= 'z') || (curr >= 'A' && curr <= 'Z') || curr == '_' || curr == '$') {
 					state = State.IN_IDENT;
 					text += curr;
@@ -54,6 +55,13 @@ public class Lexer implements ILexer {
 				} else {
 					tokens.add(new Token(checkReserved(text), text, line, col));
 					i--;
+					System.out.println(text);
+					state = State.START;
+				}
+				if(i == input.length()-1) {
+					tokens.add(new Token(checkReserved(text), text, line, col));
+					i--;
+					System.out.println(text);
 					state = State.START;
 				}
 			}
@@ -64,6 +72,7 @@ public class Lexer implements ILexer {
 			}
 			*/
 			}
+			
 		}
 	}
 
