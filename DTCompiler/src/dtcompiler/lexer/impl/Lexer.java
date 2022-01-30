@@ -13,6 +13,8 @@ import edu.ufl.cise.plc.IToken.Kind;
 public class Lexer implements ILexer {
 
 	List<Token> tokens;
+	int position;
+	
 	final HashSet<String> type = new HashSet<>(Arrays.asList("string", "int", "float", "boolean",
 			"color", "image", "void"));
 	final HashSet<String> image_op = new HashSet<>(Arrays.asList("getWidth", "getHeight"));
@@ -28,6 +30,7 @@ public class Lexer implements ILexer {
 
 	public Lexer(String input) {
 		tokens = new ArrayList<Token>();
+		position = 0;
 
 		State state = State.START;
 		int line = 0;
@@ -44,25 +47,20 @@ public class Lexer implements ILexer {
 				if ((curr >= 'a' && curr <= 'z') || (curr >= 'A' && curr <= 'Z') || curr == '_' || curr == '$') {
 					state = State.IN_IDENT;
 					text += curr;
-					line++;
+					col++;
 				}
 			}
 			case IN_IDENT -> {  //handles both reserved and identifier tokens
 				if ((curr >= 'a' && curr <= 'z') || (curr >= 'A' && curr <= 'Z') || curr == '_' || curr == '$'
 						|| (curr >= '0' && curr <= '9')) {
 					text += curr;
-					line++;
+					col++;
 				} else {
 					tokens.add(new Token(checkReserved(text), text, line, col));
-					i--;
-					System.out.println(text);
 					state = State.START;
 				}
 				if(i == input.length()-1) {
 					tokens.add(new Token(checkReserved(text), text, line, col));
-					i--;
-					System.out.println(text);
-					state = State.START;
 				}
 			}
 			/*
@@ -78,14 +76,14 @@ public class Lexer implements ILexer {
 
 	@Override
 	public IToken next() throws LexicalException {
-		// TODO Auto-generated method stub
-		return null;
+		IToken curr = tokens.get(position);
+		position++;
+		return curr;
 	}
 
 	@Override
 	public IToken peek() throws LexicalException {
-		// TODO Auto-generated method stub
-		return null;
+		return tokens.get(position);
 	}
 
 	private IToken.Kind checkReserved(String input) {

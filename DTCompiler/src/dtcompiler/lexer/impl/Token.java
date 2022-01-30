@@ -17,20 +17,17 @@ public class Token implements IToken{
 	
 	@Override
 	public Kind getKind() {
-		// TODO Auto-generated method stub
-		return null;
+		return kind;
 	}
 
 	@Override
 	public String getText() {
-		// TODO Auto-generated method stub
-		return null;
+		return text;
 	}
 
 	@Override
 	public SourceLocation getSourceLocation() {
-		// TODO Auto-generated method stub
-		return null;
+		return location;
 	}
 
 	@Override
