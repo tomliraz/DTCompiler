@@ -24,7 +24,7 @@ public class Lexer implements ILexer {
 	final HashSet<String> boolean_lit = new HashSet<>(Arrays.asList("true", "false"));
 
 	public static enum State {
-		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC
+		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC, IS_DASH, IS_EP
 	}
 
 	public Lexer(String input) throws LexicalException {
@@ -73,6 +73,14 @@ public class Lexer implements ILexer {
 					col++;
 					text += curr;
 					state = State.IS_EQ;
+				} else if (curr == '-') {
+					col++;
+					text += curr;
+					state = State.IS_DASH;
+				} else if (curr == '!') {
+					col++;
+					text += curr;
+					state = State.IS_EP;
 				} else if (curr == '\n') {
 					line++;
 					col = 0;
@@ -156,29 +164,12 @@ public class Lexer implements ILexer {
 				}
 			}
 
-			case IS_GT -> {
-
-				if (curr == '=') {
-					text += curr;
-					tokens.add(new Token(Kind.GE, text, tokenLine, tokenCol));
-					state = State.START;
-					col++;
-				} else {
-					tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
-					state = State.START;
-					i--;
-				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
-				}
-			}
-
 			case IN_STRING -> {
-				if(curr == '\n') {
+				if (curr == '\n') {
 					text += curr;
 					col = 0;
 					line++;
-				} else if(curr != '\\' && curr != '\"') {
+				} else if (curr != '\\' && curr != '\"') {
 					text += curr;
 					col++;
 				} else if (curr == '\"') {
@@ -192,14 +183,37 @@ public class Lexer implements ILexer {
 					state = State.IN_STRING_ESC;
 				}
 			}
+
 			case IN_STRING_ESC -> {
 				if (curr == 'b' || curr == 't' || curr == 'n' || curr == 'f' || curr == 'r' || curr == '\"'
 						|| curr == '\'' || curr == '\\') {
 					text += curr;
 					state = State.IN_STRING;
 				} else {
-					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
+					tokens.add(new Token(Kind.ERROR, "Invalid string token", tokenLine, tokenCol));
 					i = input.length();
+				}
+			}
+
+			case IS_GT -> {
+
+				if (curr == '=') {
+					text += curr;
+					tokens.add(new Token(Kind.GE, text, tokenLine, tokenCol));
+					state = State.START;
+					col++;
+				} else if (curr == '>') {
+					text += curr;
+					tokens.add(new Token(Kind.RANGLE, text, tokenLine, tokenCol));
+					state = State.START;
+					col++;
+				} else {
+					tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
+					state = State.START;
+					i--;
+				}
+				if (i == input.length() - 1) {
+					tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
 				}
 			}
 
@@ -212,6 +226,11 @@ public class Lexer implements ILexer {
 				} else if (curr == '-') {
 					text += curr;
 					tokens.add(new Token(Kind.LARROW, text, tokenLine, tokenCol));
+					state = State.START;
+					col++;
+				} else if (curr == '<') {
+					text += curr;
+					tokens.add(new Token(Kind.LANGLE, text, tokenLine, tokenCol));
 					state = State.START;
 					col++;
 				} else {
@@ -240,6 +259,38 @@ public class Lexer implements ILexer {
 				}
 			}
 
+			case IS_DASH -> {
+				if (curr == '>') {
+					text += curr;
+					tokens.add(new Token(Kind.RARROW, text, tokenLine, tokenCol));
+					state = State.START;
+					col++;
+				} else {
+					tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
+					state = State.START;
+					i--;
+				}
+				if (i == input.length() - 1) {
+					tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
+				}
+			}
+			
+			case IS_EP -> {
+				if (curr == '=') {
+					text += curr;
+					tokens.add(new Token(Kind.NOT_EQUALS, text, tokenLine, tokenCol));
+					state = State.START;
+					col++;
+				} else {
+					tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
+					state = State.START;
+					i--;
+				}
+				if (i == input.length() - 1) {
+					tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
+				}
+			}
+			
 			}
 		}
 	}
@@ -281,8 +332,6 @@ public class Lexer implements ILexer {
 			return Kind.KW_WRITE;
 		} else if (input.equals("console")) {
 			return Kind.KW_CONSOLE;
-		} else if (input.equals("return")) {
-			return Kind.RETURN;
 		}
 		return Kind.IDENT;
 	}

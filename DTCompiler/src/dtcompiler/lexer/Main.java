@@ -9,9 +9,8 @@ public class Main {
 		// TODO Auto-generated method stub
 
 		Lexer textLexer = new Lexer("""
-				int "yo
-				
-				y"
+				int "yoy"
+				! != !!= =!
 				== = <- >= < >
 				yoyo 01.123""");
 
