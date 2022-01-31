@@ -25,7 +25,7 @@ public class Lexer implements ILexer {
 
 	public static enum State {
 		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC, IS_DASH,
-		IS_EP
+		IS_EP, IN_COMMENT
 	}
 
 	public Lexer(String input) {
@@ -43,7 +43,6 @@ public class Lexer implements ILexer {
 			char curr = input.charAt(i);
 
 			switch (state) {
-
 			case START -> { // where the state machine starts
 				tokenLine = line;
 				tokenCol = col;
@@ -128,6 +127,8 @@ public class Lexer implements ILexer {
 				} else if (curr == '^') {
 					tokens.add(new Token(Kind.RETURN, "^", line, col));
 					col++;
+				} else if (curr == '#') {
+					state = State.IN_COMMENT;
 				} else {
 					tokens.add(new Token(Kind.ERROR, "Invalid token", tokenLine, tokenCol));
 					i = input.length(); // breaks the loops=
@@ -330,6 +331,13 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
 				}
 			}
+			case IN_COMMENT -> {
+				if (curr == '\n') {
+					state = State.START;
+					line++;
+					col = 0;
+				}
+			}
 
 			}
 		}
@@ -338,29 +346,14 @@ public class Lexer implements ILexer {
 
 	@Override
 	public IToken next() throws LexicalException {
-		if (position >= tokens.size())
-			throw new LexicalException("Reached end of tokens.");
-		
-		IToken curr = tokens.get(position);
-		
-		if(curr.getKind() == Kind.ERROR)
-			throw new LexicalException("Invalid Token", curr.getSourceLocation());
-		
+		IToken curr = getAndValidateCurrentToken();
 		position++;
 		return curr;
 	}
 
 	@Override
 	public IToken peek() throws LexicalException {
-		if (position >= tokens.size())
-			throw new LexicalException("Reached end of tokens.");
-		
-		Token curr = tokens.get(position);
-		
-		if(curr.getKind() == Kind.ERROR)
-			throw new LexicalException("Invalid Token", curr.getSourceLocation());
-		
-		return curr;
+		return getAndValidateCurrentToken();
 	}
 
 	private IToken.Kind checkReserved(String input) {
@@ -388,6 +381,32 @@ public class Lexer implements ILexer {
 			return Kind.KW_VOID;
 		}
 		return Kind.IDENT;
+	}
+	
+	private Token getAndValidateCurrentToken() throws LexicalException {
+		if (position >= tokens.size())
+			throw new LexicalException("Reached end of tokens.");
+		
+		Token curr = tokens.get(position);
+		
+		if(curr.getKind() == Kind.ERROR)
+			throw new LexicalException("Invalid Token", curr.getSourceLocation());
+		if(curr.getKind() == Kind.INT_LIT) {
+			try {
+				int test = curr.getIntValue();
+			} catch(Exception e) {
+				throw new LexicalException(e);
+			}
+		}
+		
+		if(curr.getKind() == Kind.FLOAT_LIT) {
+			try {
+				float test = curr.getFloatValue();
+			} catch(Exception e) {
+				throw new LexicalException(e);
+			}
+		}
+		return curr;
 	}
 
 }
