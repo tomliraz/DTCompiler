@@ -32,25 +32,29 @@ public class Token implements IToken{
 
 	@Override
 	public int getIntValue() {
-		// TODO Auto-generated method stub
+		if(kind == Kind.INT_LIT)
+			return Integer.parseInt(text);
 		return 0;
 	}
 
 	@Override
 	public float getFloatValue() {
-		// TODO Auto-generated method stub
-		return 0;
+		if(kind == Kind.FLOAT_LIT)
+			return Float.parseFloat(text);
+		return 0f;
 	}
 
 	@Override
 	public boolean getBooleanValue() {
-		// TODO Auto-generated method stub
+		if(kind == Kind.BOOLEAN_LIT)
+			return Boolean.parseBoolean(text);
 		return false;
 	}
 
 	@Override
 	public String getStringValue() {
-		// TODO Auto-generated method stub
+		if(kind == Kind.STRING_LIT)
+			return text;
 		return null;
 	}
 

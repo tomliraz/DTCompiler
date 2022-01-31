@@ -91,30 +91,43 @@ public class Lexer implements ILexer {
 					col++;
 				} else if (curr == '*') {
 					tokens.add(new Token(Kind.TIMES, "*", line, col));
+					col++;
 				} else if (curr == '/') {
 					tokens.add(new Token(Kind.DIV, "/", line, col));
+					col++;
 				} else if (curr == '%') {
 					tokens.add(new Token(Kind.MOD, "%", line, col));
+					col++;
 				} else if (curr == '(') {
 					tokens.add(new Token(Kind.LPAREN, "(", line, col));
+					col++;
 				} else if (curr == ')') {
 					tokens.add(new Token(Kind.RPAREN, ")", line, col));
+					col++;
 				} else if (curr == '[') {
 					tokens.add(new Token(Kind.LSQUARE, "[", line, col));
+					col++;
 				} else if (curr == ']') {
 					tokens.add(new Token(Kind.RSQUARE, "]", line, col));
+					col++;
 				} else if (curr == '&') {
 					tokens.add(new Token(Kind.AND, "&", line, col));
+					col++;
 				} else if (curr == '|') {
 					tokens.add(new Token(Kind.OR, "|", line, col));
+					col++;
 				} else if (curr == '+') {
 					tokens.add(new Token(Kind.PLUS, "+", line, col));
+					col++;
 				} else if (curr == ';') {
 					tokens.add(new Token(Kind.SEMI, ";", line, col));
+					col++;
 				} else if (curr == ',') {
 					tokens.add(new Token(Kind.COMMA, ",", line, col));
+					col++;
 				} else if (curr == '^') {
 					tokens.add(new Token(Kind.RETURN, "^", line, col));
+					col++;
 				} else {
 					tokens.add(new Token(Kind.ERROR, "Invalid token", tokenLine, tokenCol));
 					i = input.length(); // breaks the loops=
@@ -327,7 +340,12 @@ public class Lexer implements ILexer {
 	public IToken next() throws LexicalException {
 		if (position >= tokens.size())
 			throw new LexicalException("Reached end of tokens.");
+		
 		IToken curr = tokens.get(position);
+		
+		if(curr.getKind() == Kind.ERROR)
+			throw new LexicalException("Invalid Token", curr.getSourceLocation());
+		
 		position++;
 		return curr;
 	}
@@ -336,7 +354,13 @@ public class Lexer implements ILexer {
 	public IToken peek() throws LexicalException {
 		if (position >= tokens.size())
 			throw new LexicalException("Reached end of tokens.");
-		return tokens.get(position);
+		
+		Token curr = tokens.get(position);
+		
+		if(curr.getKind() == Kind.ERROR)
+			throw new LexicalException("Invalid Token", curr.getSourceLocation());
+		
+		return curr;
 	}
 
 	private IToken.Kind checkReserved(String input) {
