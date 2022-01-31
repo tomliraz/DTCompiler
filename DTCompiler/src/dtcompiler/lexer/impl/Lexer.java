@@ -16,7 +16,7 @@ public class Lexer implements ILexer {
 	int position;
 
 	final HashSet<String> type = new HashSet<>(
-			Arrays.asList("string", "int", "float", "boolean", "color", "image", "void"));
+			Arrays.asList("string", "int", "float", "boolean", "color", "image"));
 	final HashSet<String> image_op = new HashSet<>(Arrays.asList("getWidth", "getHeight"));
 	final HashSet<String> color_op = new HashSet<>(Arrays.asList("getRed", "getGreen", "getBlue"));
 	final HashSet<String> color_const = new HashSet<>(Arrays.asList("BLACK", "BLUE", "CYAN", "DARK_GRAY", "GRAY",
@@ -24,10 +24,11 @@ public class Lexer implements ILexer {
 	final HashSet<String> boolean_lit = new HashSet<>(Arrays.asList("true", "false"));
 
 	public static enum State {
-		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC, IS_DASH, IS_EP
+		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC, IS_DASH,
+		IS_EP
 	}
 
-	public Lexer(String input) throws LexicalException {
+	public Lexer(String input) {
 		tokens = new ArrayList<Token>();
 		position = 0;
 
@@ -88,6 +89,32 @@ public class Lexer implements ILexer {
 					state = State.IN_STRING;
 					text += curr;
 					col++;
+				} else if (curr == '*') {
+					tokens.add(new Token(Kind.TIMES, "*", line, col));
+				} else if (curr == '/') {
+					tokens.add(new Token(Kind.DIV, "/", line, col));
+				} else if (curr == '%') {
+					tokens.add(new Token(Kind.MOD, "%", line, col));
+				} else if (curr == '(') {
+					tokens.add(new Token(Kind.LPAREN, "(", line, col));
+				} else if (curr == ')') {
+					tokens.add(new Token(Kind.RPAREN, ")", line, col));
+				} else if (curr == '[') {
+					tokens.add(new Token(Kind.LSQUARE, "[", line, col));
+				} else if (curr == ']') {
+					tokens.add(new Token(Kind.RSQUARE, "]", line, col));
+				} else if (curr == '&') {
+					tokens.add(new Token(Kind.AND, "&", line, col));
+				} else if (curr == '|') {
+					tokens.add(new Token(Kind.OR, "|", line, col));
+				} else if (curr == '+') {
+					tokens.add(new Token(Kind.PLUS, "+", line, col));
+				} else if (curr == ';') {
+					tokens.add(new Token(Kind.SEMI, ";", line, col));
+				} else if (curr == ',') {
+					tokens.add(new Token(Kind.COMMA, ",", line, col));
+				} else if (curr == '^') {
+					tokens.add(new Token(Kind.RETURN, "^", line, col));
 				} else {
 					tokens.add(new Token(Kind.ERROR, "Invalid token", tokenLine, tokenCol));
 					i = input.length(); // breaks the loops=
@@ -274,7 +301,7 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
 				}
 			}
-			
+
 			case IS_EP -> {
 				if (curr == '=') {
 					text += curr;
@@ -290,9 +317,10 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
 				}
 			}
-			
+
 			}
 		}
+		tokens.add(new Token(Kind.EOF, "End of file", line, col));
 	}
 
 	@Override
@@ -332,6 +360,8 @@ public class Lexer implements ILexer {
 			return Kind.KW_WRITE;
 		} else if (input.equals("console")) {
 			return Kind.KW_CONSOLE;
+		}else if (input.equals("void")) {
+			return Kind.KW_VOID;
 		}
 		return Kind.IDENT;
 	}
