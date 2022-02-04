@@ -69,7 +69,7 @@ public class Lexer implements ILexer {
 					if (i == input.length() - 1) {
 						tokens.add(new Token(Kind.INT_LIT, text, tokenLine, tokenCol));
 					}
-				} else if (curr == ' ') {
+				} else if (curr == ' ' || curr == '\t' || curr == '\r') {	
 					col++;
 				} else if (curr == '>') { // handles gt and gteq
 					col++;
@@ -228,7 +228,6 @@ public class Lexer implements ILexer {
 					text += curr;
 					col++;
 				} else if(text.charAt(text.length() - 1) == '.') {
-					text += curr;
 					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
 					i = input.length();
 				} else {
@@ -405,12 +404,17 @@ public class Lexer implements ILexer {
 		Token curr = tokens.get(position);
 		
 		if(curr.getKind() == Kind.ERROR)
-			throw new LexicalException("Invalid Token", curr.getSourceLocation());
+			throw new LexicalException("Invalid Token: " + curr.getText(), curr.getSourceLocation());
 		if(curr.getKind() == Kind.INT_LIT) {
 			try {
 				int test = curr.getIntValue();
 			} catch(Exception e) {
 				throw new LexicalException(e);
+			}
+		}
+		if(curr.getKind() == Kind.FLOAT_LIT) {
+			if(Float.parseFloat(curr.getText()) == Float.POSITIVE_INFINITY) {
+				throw new LexicalException("Float literal out of bounds.", curr.getSourceLocation());
 			}
 		}
 		return curr;
