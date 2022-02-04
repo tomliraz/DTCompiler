@@ -26,7 +26,7 @@ public class Lexer implements ILexer {
 
 	public static enum State {
 		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IS_DASH,
-		IS_EP, IN_COMMENT
+		IS_EP, IN_COMMENT, IN_STRING_ESC
 	}
 
 	public Lexer(String input) {
@@ -246,7 +246,7 @@ public class Lexer implements ILexer {
 					text += curr;
 					col = 0;
 					line++;
-				} else if (curr != '\"') {
+				} else if (curr != '\\' && curr != '\"') {
 					text += curr;
 					col++;
 				} else if (curr == '\"') {
@@ -255,11 +255,28 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.STRING_LIT, text, tokenLine, tokenCol));
 					state = State.START;
 					break;
+				} else if (curr == '\\') {
+					text += curr;
+					col++;
+					state = State.IN_STRING_ESC;
 				}
 				if (i == input.length() - 1) {
 					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
 					i = input.length();
 				}
+			}
+			
+			case IN_STRING_ESC -> {
+				if (curr == 'b' || curr == 't' || curr == 'n' || curr == 'f' || curr == 'r' || curr == '\"'
+						|| curr == '\'' || curr == '\\') {
+					text += curr;
+					state = State.IN_STRING;
+				} else {
+					tokens.add(new Token(Kind.ERROR, "Invalid string token", tokenLine, tokenCol));
+					i = input.length();
+				}
+				
+				
 			}
 
 			case IS_GT -> {
