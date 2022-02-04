@@ -52,14 +52,23 @@ public class Lexer implements ILexer {
 					state = State.IN_IDENT;
 					text += curr;
 					col++;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.IDENT, text, tokenLine, tokenCol));
+					}
 				} else if (curr >= '1' && curr <= '9') {
 					state = State.DIGIT;
 					text += curr;
 					col++;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.INT_LIT, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '0') {
 					state = State.START_ZERO;
 					text += curr;
 					col++;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.INT_LIT, text, tokenLine, tokenCol));
+					}
 				} else if (curr == ' ') {
 					col++;
 				} else if (curr == '>') { // handles gt and gteq
@@ -104,6 +113,10 @@ public class Lexer implements ILexer {
 					state = State.IN_STRING;
 					text += curr;
 					col++;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
+						i = input.length();
+					}
 				} else if (curr == '*') {
 					tokens.add(new Token(Kind.TIMES, "*", line, col));
 					col++;
@@ -146,7 +159,8 @@ public class Lexer implements ILexer {
 				} else if (curr == '#') {
 					state = State.IN_COMMENT;
 				} else {
-					tokens.add(new Token(Kind.ERROR, "Invalid token", tokenLine, tokenCol));
+					text += curr;
+					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
 					i = input.length(); // breaks the loops=
 					// throw new LexicalException("Invalid token");
 				}
@@ -185,8 +199,8 @@ public class Lexer implements ILexer {
 					i--;
 				}
 				if (i == input.length() - 1 && state == State.HAVE_DOT) {
-					tokens.add(new Token(Kind.ERROR, "Invalid float token.", tokenLine, tokenCol));
-					state = State.START;
+					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
+					i = input.length();
 				} else if(i == input.length() - 1 )
 					tokens.add(new Token(Kind.INT_LIT, text, tokenLine, tokenCol));
 
@@ -214,13 +228,15 @@ public class Lexer implements ILexer {
 					text += curr;
 					col++;
 				} else if(text.charAt(text.length() - 1) == '.') {
-					tokens.add(new Token(Kind.ERROR, "Invalid float token.", tokenLine, tokenCol));
-					state = State.START;
+					text += curr;
+					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
+					i = input.length();
 				} else {
 					tokens.add(new Token(Kind.FLOAT_LIT, text, tokenLine, tokenCol));
 					state = State.START;
 					i--;
 				}
+				
 				if (i == input.length() - 1) {
 					tokens.add(new Token(Kind.FLOAT_LIT, text, tokenLine, tokenCol));
 				}
@@ -239,9 +255,11 @@ public class Lexer implements ILexer {
 					col++;
 					tokens.add(new Token(Kind.STRING_LIT, text, tokenLine, tokenCol));
 					state = State.START;
+					break;
 				}
 				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.ERROR, "Invalid String token", tokenLine, tokenCol));
+					tokens.add(new Token(Kind.ERROR, text, tokenLine, tokenCol));
+					i = input.length();
 				}
 			}
 
