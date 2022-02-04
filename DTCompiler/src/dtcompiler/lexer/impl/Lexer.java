@@ -270,6 +270,7 @@ public class Lexer implements ILexer {
 				if (curr == 'b' || curr == 't' || curr == 'n' || curr == 'f' || curr == 'r' || curr == '\"'
 						|| curr == '\'' || curr == '\\') {
 					text += curr;
+					col++;
 					state = State.IN_STRING;
 				} else {
 					tokens.add(new Token(Kind.ERROR, "Invalid string token", tokenLine, tokenCol));

@@ -63,24 +63,29 @@ public class Token implements IToken {
 
 					if (i != text.length() - 1) {
 
-						if (text.charAt(i + 1) == '\\' || text.charAt(i + 1) == '\b' || text.charAt(i + 1) == '\t'
-								|| text.charAt(i + 1) == '\n' || text.charAt(i + 1) == '\f'
-								|| text.charAt(i + 1) == '\r' || text.charAt(i + 1) == '\''
-								|| text.charAt(i + 1) == '\"') {
-
+						if (text.charAt(i + 1) == 'b') {
+							output += '\b';
+						} else if (text.charAt(i + 1) == 't') {
+							output += '\t';
+						} else if (text.charAt(i + 1) == 'n') {
+							output += '\n';
+						} else if (text.charAt(i + 1) == 'f') {
+							output += '\f';
+						} else if (text.charAt(i + 1) == 'r') {
+							output += '\r';
+						} else {
 							output += text.charAt(i + 1);
-							i++;
 						}
+						i++;
 
-					} else {
-						// throw error
 					}
+
 				} else {
 					output += text.charAt(i);
 				}
 
 			}
-			output = output.substring(1, output.length()-1);
+			output = output.substring(1, output.length() - 1);
 			return output;
 		}
 
