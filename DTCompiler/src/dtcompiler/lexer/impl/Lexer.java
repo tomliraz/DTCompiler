@@ -66,14 +66,23 @@ public class Lexer implements ILexer {
 					col++;
 					text += curr;
 					state = State.IS_GT;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '<') { // handles lt and lteq
 					col++;
 					text += curr;
 					state = State.IS_LT;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.LT, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '=') { // handles assign and equals
 					col++;
 					text += curr;
 					state = State.IS_EQ;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.ASSIGN, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '-') {
 					col++;
 					text += curr;
@@ -85,6 +94,9 @@ public class Lexer implements ILexer {
 					col++;
 					text += curr;
 					state = State.IS_EP;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '\n') {
 					line++;
 					col = 0;
@@ -250,9 +262,7 @@ public class Lexer implements ILexer {
 					state = State.START;
 					i--;
 				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.GT, text, tokenLine, tokenCol));
-				}
+
 			}
 
 			case IS_LT -> {
@@ -276,9 +286,6 @@ public class Lexer implements ILexer {
 					state = State.START;
 					i--;
 				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.LT, text, tokenLine, tokenCol));
-				}
 			}
 
 			case IS_EQ -> {
@@ -292,9 +299,7 @@ public class Lexer implements ILexer {
 					state = State.START;
 					i--;
 				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.ASSIGN, text, tokenLine, tokenCol));
-				}
+
 			}
 					
 			case IS_DASH -> {
@@ -321,9 +326,7 @@ public class Lexer implements ILexer {
 					state = State.START;
 					i--;
 				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.BANG, text, tokenLine, tokenCol));
-				}
+
 			}
 			case IN_COMMENT -> {
 				if (curr == '\n') {
