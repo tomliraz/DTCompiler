@@ -24,7 +24,7 @@ public class Lexer implements ILexer {
 	final HashSet<String> boolean_lit = new HashSet<>(Arrays.asList("true", "false"));
 
 	public static enum State {
-		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IN_STRING_ESC, IS_DASH,
+		START, IN_IDENT, IS_ERROR, DIGIT, START_ZERO, HAVE_DOT, IS_LT, IS_GT, IS_EQ, IN_STRING, IS_DASH,
 		IS_EP, IN_COMMENT
 	}
 
@@ -77,6 +77,9 @@ public class Lexer implements ILexer {
 					col++;
 					text += curr;
 					state = State.IS_DASH;
+					if (i == input.length() - 1) {
+						tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
+					}
 				} else if (curr == '!') {
 					col++;
 					text += curr;
@@ -168,9 +171,11 @@ public class Lexer implements ILexer {
 					state = State.START;
 					i--;
 				}
-				if (i == input.length() - 1) {
+				if (i == input.length() - 1 && state == State.HAVE_DOT) {
+					tokens.add(new Token(Kind.ERROR, "Invalid float token.", tokenLine, tokenCol));
+					state = State.START;
+				} else if(i == input.length() - 1 )
 					tokens.add(new Token(Kind.INT_LIT, text, tokenLine, tokenCol));
-				}
 
 			}
 
@@ -195,6 +200,9 @@ public class Lexer implements ILexer {
 				if (curr >= '0' && curr <= '9') {
 					text += curr;
 					col++;
+				} else if(text.charAt(text.length() - 1) == '.') {
+					tokens.add(new Token(Kind.ERROR, "Invalid float token.", tokenLine, tokenCol));
+					state = State.START;
 				} else {
 					tokens.add(new Token(Kind.FLOAT_LIT, text, tokenLine, tokenCol));
 					state = State.START;
@@ -206,11 +214,11 @@ public class Lexer implements ILexer {
 			}
 
 			case IN_STRING -> {
-				if (curr == '\n') {
+				if (curr == '\n') { 
 					text += curr;
 					col = 0;
 					line++;
-				} else if (curr != '\\' && curr != '\"') {
+				} else if (curr != '\"') {
 					text += curr;
 					col++;
 				} else if (curr == '\"') {
@@ -218,21 +226,9 @@ public class Lexer implements ILexer {
 					col++;
 					tokens.add(new Token(Kind.STRING_LIT, text, tokenLine, tokenCol));
 					state = State.START;
-				} else if (curr == '\\') {
-					text += curr;
-					col++;
-					state = State.IN_STRING_ESC;
 				}
-			}
-
-			case IN_STRING_ESC -> {
-				if (curr == 'b' || curr == 't' || curr == 'n' || curr == 'f' || curr == 'r' || curr == '\"'
-						|| curr == '\'' || curr == '\\') {
-					text += curr;
-					state = State.IN_STRING;
-				} else {
-					tokens.add(new Token(Kind.ERROR, "Invalid string token", tokenLine, tokenCol));
-					i = input.length();
+				if (i == input.length() - 1) {
+					tokens.add(new Token(Kind.ERROR, "Invalid String token", tokenLine, tokenCol));
 				}
 			}
 
@@ -299,7 +295,7 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.ASSIGN, text, tokenLine, tokenCol));
 				}
 			}
-
+					
 			case IS_DASH -> {
 				if (curr == '>') {
 					text += curr;
@@ -310,9 +306,6 @@ public class Lexer implements ILexer {
 					tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
 					state = State.START;
 					i--;
-				}
-				if (i == input.length() - 1) {
-					tokens.add(new Token(Kind.MINUS, text, tokenLine, tokenCol));
 				}
 			}
 
@@ -394,14 +387,6 @@ public class Lexer implements ILexer {
 		if(curr.getKind() == Kind.INT_LIT) {
 			try {
 				int test = curr.getIntValue();
-			} catch(Exception e) {
-				throw new LexicalException(e);
-			}
-		}
-		
-		if(curr.getKind() == Kind.FLOAT_LIT) {
-			try {
-				float test = curr.getFloatValue();
 			} catch(Exception e) {
 				throw new LexicalException(e);
 			}
