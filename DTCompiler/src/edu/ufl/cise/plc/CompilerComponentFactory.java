@@ -1,6 +1,7 @@
 package edu.ufl.cise.plc;
 
 import dtcompiler.lexer.impl.Lexer;
+import dtcompiler.parser.impl.Parser;
 
 //This class eliminates hard coded dependencies on the actual Lexer class.  You can call your lexer whatever you
 //want as long as it implements the ILexer interface and you have provided an appropriate body for the getLexer method.
