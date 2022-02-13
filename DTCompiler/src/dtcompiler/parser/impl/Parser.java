@@ -61,55 +61,83 @@ public class Parser implements IParser {
 
 	Expr LogicalOrExpr() throws PLCException {
 		IToken f = t;
-		Expr expr = LogicalAndExpr();
-		if (isKind(Kind.OR)) {
-			return new BinaryExpr(f, expr, match(Kind.OR), LogicalOrExpr());
-		}
-		return expr;
+		Expr left = null;
+		Expr right = null;
+		left = LogicalAndExpr();
+		
+		while (isKind(Kind.OR)) {
+			IToken op = t;
+			consume();
+			right = LogicalAndExpr();
+			left = new BinaryExpr(f, left, op, right);
+			}
+		return left;
 	}
 
 	Expr LogicalAndExpr() throws PLCException {
 		IToken f = t;
-		Expr expr = ComparisonExpr();
-		if (isKind(Kind.AND)) {
-			return new BinaryExpr(f, expr, match(Kind.AND), LogicalAndExpr());
-		}
-		return expr;
+		Expr left = null;
+		Expr right = null;
+		left = ComparisonExpr();
+		
+		while (isKind(Kind.AND)) {
+			IToken op = t;
+			consume();
+			right = ComparisonExpr();
+			left = new BinaryExpr(f, left, op, right);
+			}
+		return left;
 	}
 
 	Expr ComparisonExpr() throws PLCException {
 		IToken f = t;
-		Expr expr = AdditiveExpr();
-		if (isKind(Kind.GT, Kind.LT, Kind.GE, Kind.LE, Kind.EQUALS, Kind.NOT_EQUALS)) {
-			return new BinaryExpr(f, expr, consume(), ComparisonExpr());
-		}
-		return expr;
+		Expr left = null;
+		Expr right = null;
+		left = AdditiveExpr();
+		
+		while (isKind(Kind.GE, Kind.LE, Kind.GT, Kind.LT, Kind.EQUALS, Kind.NOT_EQUALS)) {
+			IToken op = t;
+			consume();
+			right = AdditiveExpr();
+			left = new BinaryExpr(f, left, op, right);
+			}
+		return left;
 	}
 
 	Expr AdditiveExpr() throws PLCException {
 		IToken f = t;
-		Expr expr = MultiplicativeExpr();
-		if (isKind(Kind.PLUS, Kind.MINUS)) {
-			return new BinaryExpr(f, expr, consume(), AdditiveExpr());
-		}
-		return expr;
+		Expr left = null;
+		Expr right = null;
+		left = MultiplicativeExpr();
+		
+		while (isKind(Kind.PLUS, Kind.MINUS)) {
+			IToken op = t;
+			consume();
+			right = MultiplicativeExpr();
+			left = new BinaryExpr(f, left, op, right);
+			}
+		return left;
 	}
 
 	Expr MultiplicativeExpr() throws PLCException {
 		IToken f = t;
-		Expr expr = UnaryExpr();
-		if (isKind(Kind.PLUS, Kind.MINUS)) {
-			return new BinaryExpr(f, expr, consume(), MultiplicativeExpr());
-		}
-		return expr;
+		Expr left = null;
+		Expr right = null;
+		left = UnaryExpr();
+		
+		while (isKind(Kind.TIMES, Kind.DIV, Kind.MOD)) {
+			IToken op = t;
+			consume();
+			right = UnaryExpr();
+			left = new BinaryExpr(f, left, op, right);
+			}
+		return left;
 	}
 
 	Expr UnaryExpr() throws PLCException {
 		IToken f = t;
 		if (isKind(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP)) {
-			IToken curr = consume();
-			System.out.println("Token consumed: " + curr.getText());
-			return new UnaryExpr(f, curr, UnaryExpr());
+			return new UnaryExpr(f, consume(), UnaryExpr());
 		} else {
 			return UnaryExprPostfix();
 		}
@@ -145,7 +173,6 @@ public class Parser implements IParser {
 			match(Kind.RPAREN);
 			return temp;
 		} else {
-			System.out.println(f.getText());
 			throw new SyntaxException("Illegal token.", f.getSourceLocation());
 		}
 	}
@@ -173,8 +200,8 @@ public class Parser implements IParser {
 
 	IToken consume() throws PLCException {
 		IToken curr = l.next();
+		System.out.println(curr.getText());
 		t = l.peek();
-		//System.out.println("Hey there: " + t.getText());
 		return curr;
 	}
 
