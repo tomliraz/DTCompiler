@@ -129,15 +129,15 @@ public class Parser implements IParser {
 	Expr PrimaryExpr() throws PLCException {
 		IToken f = t;
 		if (isKind(Kind.BOOLEAN_LIT)) {
-			return new BooleanLitExpr(t);
+			return new BooleanLitExpr(consume());
 		} else if (isKind(Kind.STRING_LIT)) {
-			return new StringLitExpr(t);
+			return new StringLitExpr(consume());
 		} else if (isKind(Kind.INT_LIT)) {
-			return new IntLitExpr(t);
+			return new IntLitExpr(consume());
 		} else if (isKind(Kind.FLOAT_LIT)) {
-			return new FloatLitExpr(t);
+			return new FloatLitExpr(consume());
 		} else if (isKind(Kind.IDENT)) {
-			return new IdentExpr(t);
+			return new IdentExpr(consume());
 		} else if (isKind(Kind.LPAREN)) {
 			Expr temp;
 			match(Kind.LPAREN);
