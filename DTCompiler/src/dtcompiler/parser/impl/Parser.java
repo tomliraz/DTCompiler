@@ -34,8 +34,7 @@ public class Parser implements IParser {
 
 	@Override
 	public ASTNode parse() throws PLCException {
-		Expr();
-		return node;
+		return Expr();
 	}
 
 	Expr Expr() throws PLCException {
@@ -114,14 +113,21 @@ public class Parser implements IParser {
 		}
 	}
 
-	UnaryExprPostfix UnaryExprPostfix() throws PLCException {
+	Expr UnaryExprPostfix() throws PLCException {
 		IToken f = t;
-		return new UnaryExprPostfix(f, PrimaryExpr(), PixelSelector());
+		Expr primary = PrimaryExpr();
+		PixelSelector selector = PixelSelector();
+		
+		if(selector != null)
+			return new UnaryExprPostfix(f, PrimaryExpr(), PixelSelector());
+		else
+			return primary;
 	}
 
 	Expr PrimaryExpr() throws PLCException {
 		IToken f = t;
-		if (isKind(Kind.BOOLEAN_LIT, Kind.STRING_LIT, Kind.INT_LIT, Kind.FLOAT_LIT, Kind.IDENT)) {
+		if (isKind(Kind.BOOLEAN_LIT)) {
+			System.out.println(t.getKind());
 			return new BooleanLitExpr(t);
 		} else if (isKind(Kind.STRING_LIT)) {
 			return new StringLitExpr(t);
