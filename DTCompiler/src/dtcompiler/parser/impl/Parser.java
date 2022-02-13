@@ -121,7 +121,7 @@ public class Parser implements IParser {
 		PixelSelector selector = PixelSelector();
 		
 		if(selector != null)
-			return new UnaryExprPostfix(f, PrimaryExpr(), PixelSelector());
+			return new UnaryExprPostfix(f, primary, selector);
 		else
 			return primary;
 	}
@@ -145,6 +145,7 @@ public class Parser implements IParser {
 			match(Kind.RPAREN);
 			return temp;
 		} else {
+			System.out.println(f.getText());
 			throw new SyntaxException("Illegal token.", f.getSourceLocation());
 		}
 	}
@@ -163,6 +164,7 @@ public class Parser implements IParser {
 	}
 
 	IToken match(Kind k) throws PLCException {
+		System.out.println("matched: " + t.getText() + " and " + k);
 		if (t.getKind() == k) {
 			return consume();
 		} else
@@ -172,7 +174,7 @@ public class Parser implements IParser {
 	IToken consume() throws PLCException {
 		IToken curr = l.next();
 		t = l.peek();
-		System.out.println("Hey there: " + t.getText());
+		//System.out.println("Hey there: " + t.getText());
 		return curr;
 	}
 
