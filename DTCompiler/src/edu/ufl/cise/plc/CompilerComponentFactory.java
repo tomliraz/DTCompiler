@@ -19,7 +19,7 @@ public class CompilerComponentFactory {
 	}
 	
 	//This method will be invoked to get an instance of your parser.
-	public static IParser getParser(String input) {
+	public static IParser getParser(String input) throws LexicalException {
 		return new Parser(input);
 	}
 	
