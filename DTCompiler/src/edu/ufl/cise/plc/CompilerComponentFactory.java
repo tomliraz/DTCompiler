@@ -17,7 +17,7 @@ public class CompilerComponentFactory {
 				"CompilerComponentFactory must be modified to return an instance of your lexer");*/
 	}
 	
-	//This method will be invoked to get an instance of your lexer.
+	//This method will be invoked to get an instance of your parser.
 	public static IParser getParser(String input) {
 		return new Parser(input);
 	}
