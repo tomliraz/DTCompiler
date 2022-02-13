@@ -29,7 +29,7 @@ public class Parser implements IParser {
 
 	public Parser(String input) throws LexicalException {
 		l = new Lexer(input);
-		t = l.next();
+		t = l.peek();
 	}
 
 	@Override
@@ -107,7 +107,9 @@ public class Parser implements IParser {
 	Expr UnaryExpr() throws PLCException {
 		IToken f = t;
 		if (isKind(Kind.BANG, Kind.MINUS, Kind.COLOR_OP, Kind.IMAGE_OP)) {
-			return new UnaryExpr(f, consume(), UnaryExpr());
+			IToken curr = consume();
+			System.out.println("Token consumed: " + curr.getText());
+			return new UnaryExpr(f, curr, UnaryExpr());
 		} else {
 			return UnaryExprPostfix();
 		}
@@ -127,7 +129,6 @@ public class Parser implements IParser {
 	Expr PrimaryExpr() throws PLCException {
 		IToken f = t;
 		if (isKind(Kind.BOOLEAN_LIT)) {
-			System.out.println(t.getKind());
 			return new BooleanLitExpr(t);
 		} else if (isKind(Kind.STRING_LIT)) {
 			return new StringLitExpr(t);
@@ -169,8 +170,10 @@ public class Parser implements IParser {
 	}
 
 	IToken consume() throws PLCException {
-		t = l.next();
-		return t;
+		IToken curr = l.next();
+		t = l.peek();
+		System.out.println("Hey there: " + t.getText());
+		return curr;
 	}
 
 	protected boolean isKind(Kind kind) {
