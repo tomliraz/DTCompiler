@@ -47,6 +47,7 @@ public class Lexer implements ILexer {
 			case START -> { // where the state machine starts
 				tokenLine = line;
 				tokenCol = col;
+				//System.out.println(tokenCol);
 				text = "";
 				if ((curr >= 'a' && curr <= 'z') || (curr >= 'A' && curr <= 'Z') || curr == '_' || curr == '$') {
 					state = State.IN_IDENT;
