@@ -1,6 +1,5 @@
-package dtcompiler.parser.impl;
+package edu.ufl.cise.plc.parser;
 
-import dtcompiler.lexer.impl.Lexer;
 import edu.ufl.cise.plc.IParser;
 import edu.ufl.cise.plc.IToken;
 import edu.ufl.cise.plc.IToken.Kind;
@@ -20,6 +19,7 @@ import edu.ufl.cise.plc.ast.ConditionalExpr;
 import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.ast.PixelSelector;*/
+import edu.ufl.cise.plc.lexer.Lexer;
 
 public class Parser implements IParser {
 

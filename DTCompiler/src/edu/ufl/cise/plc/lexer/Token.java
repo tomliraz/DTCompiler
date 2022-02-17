@@ -1,4 +1,4 @@
-package dtcompiler.lexer.impl;
+package edu.ufl.cise.plc.lexer;
 
 import edu.ufl.cise.plc.IToken;
 

@@ -1,4 +1,4 @@
-package dtcompiler.lexer.impl;
+package edu.ufl.cise.plc.lexer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
