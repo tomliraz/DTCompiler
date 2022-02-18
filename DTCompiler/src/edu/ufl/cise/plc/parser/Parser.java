@@ -191,7 +191,7 @@ public class Parser implements IParser {
 	}
 
 	IToken match(Kind k) throws PLCException {
-		System.out.println("matched: " + t.getText() + " and " + k);
+		//System.out.println("matched: " + t.getText() + " and " + k);
 		if (t.getKind() == k) {
 			return consume();
 		} else
@@ -200,7 +200,7 @@ public class Parser implements IParser {
 
 	IToken consume() throws PLCException {
 		IToken curr = l.next();
-		System.out.println(curr.getText());
+		//System.out.println(curr.getText());
 		t = l.peek();
 		return curr;
 	}
