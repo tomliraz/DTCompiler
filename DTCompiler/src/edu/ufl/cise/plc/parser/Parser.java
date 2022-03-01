@@ -1,5 +1,8 @@
 package edu.ufl.cise.plc.parser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.ufl.cise.plc.IParser;
 import edu.ufl.cise.plc.IToken;
 import edu.ufl.cise.plc.IToken.Kind;
@@ -7,25 +10,13 @@ import edu.ufl.cise.plc.LexicalException;
 import edu.ufl.cise.plc.PLCException;
 import edu.ufl.cise.plc.SyntaxException;
 import edu.ufl.cise.plc.ast.*;
-/*import edu.ufl.cise.plc.ast.ASTNode;
-import edu.ufl.cise.plc.ast.BinaryExpr;
-import edu.ufl.cise.plc.ast.BooleanLitExpr;
-import edu.ufl.cise.plc.ast.Expr;
-import edu.ufl.cise.plc.ast.FloatLitExpr;
-import edu.ufl.cise.plc.ast.IdentExpr;
-import edu.ufl.cise.plc.ast.IntLitExpr;
-import edu.ufl.cise.plc.ast.StringLitExpr;
-import edu.ufl.cise.plc.ast.ConditionalExpr;
-import edu.ufl.cise.plc.ast.UnaryExpr;
-import edu.ufl.cise.plc.ast.UnaryExprPostfix;
-import edu.ufl.cise.plc.ast.PixelSelector;*/
 import edu.ufl.cise.plc.lexer.Lexer;
 
 public class Parser implements IParser {
 
 	Lexer l;
 	IToken t;
-	ASTNode node;
+	//ASTNode node;
 
 	public Parser(String input) throws LexicalException {
 		l = new Lexer(input);
@@ -35,6 +26,56 @@ public class Parser implements IParser {
 	@Override
 	public ASTNode parse() throws PLCException {
 		return Expr();
+	}
+	
+	Program program() throws PLCException {
+		IToken type;
+		IToken name;
+		List<NameDef> params = new ArrayList<NameDef>();
+		List<ASTNode> decsAndStatements = new ArrayList<ASTNode>();
+		
+		if(isKind(Kind.TYPE, Kind.KW_VOID)) {
+			type = consume();
+			name = match(Kind.IDENT);
+			match(Kind.LPAREN);
+			if(!isKind(Kind.RPAREN)) {
+				params.add(nameDef());
+				while(!isKind(Kind.RPAREN)) {
+					match(Kind.COMMA);
+					params.add(nameDef());
+				}
+			}
+			while(!isKind(Kind.EOF)) {
+				if(isKind(Kind.TYPE)) {
+					decsAndStatements.add(nameDef());
+				} else {
+					decsAndStatements.add(statement());
+				}
+				match(Kind.SEMI);
+			}
+			return new Program(name, Types.Type.toType(type.getText()), name.getText(), params, decsAndStatements);
+		}
+		
+		throw new SyntaxException("Expected type.", t.getSourceLocation());
+		
+	}
+	
+	NameDef nameDef() throws PLCException {
+		IToken type = match(Kind.TYPE);
+		Dimension dim = null;
+		if(isKind(Kind.LSQUARE))
+			dim = dimension();
+						
+		
+		return new NameDef(t, t, t);
+	}
+	
+	Dimension dimension() {
+		return null;
+	}
+	
+	Statement statement() {
+		return null;
 	}
 
 	Expr Expr() throws PLCException {
