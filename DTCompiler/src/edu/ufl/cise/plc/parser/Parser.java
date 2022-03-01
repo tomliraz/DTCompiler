@@ -207,10 +207,22 @@ public class Parser implements IParser {
 			return new FloatLitExpr(consume());
 		} else if (isKind(Kind.IDENT)) {
 			return new IdentExpr(consume());
+		} else if (isKind(Kind.COLOR_CONST)) {
+			return new ColorConstExpr(consume());
+		} else if (isKind(Kind.KW_CONSOLE)) {
+			return new IdentExpr(consume());
+		} else if (isKind(Kind.LANGLE)) {
+			consume();
+			Expr temp1 = Expr();
+			match(Kind.COMMA);
+			Expr temp2 = Expr();
+			match(Kind.COMMA);
+			Expr temp3 = Expr();
+			match(Kind.RANGLE);
+			return new ColorExpr(f, temp1, temp2, temp3);
 		} else if (isKind(Kind.LPAREN)) {
-			Expr temp;
-			match(Kind.LPAREN);
-			temp = Expr();
+			consume();
+			Expr temp = Expr();
 			match(Kind.RPAREN);
 			return temp;
 		} else {
@@ -229,6 +241,39 @@ public class Parser implements IParser {
 			return new PixelSelector(f_selector, e1, e2);
 		}
 		return null;
+	}
+	
+	Statement Statement() throws PLCException {
+		IToken f = t;
+		if (isKind(Kind.IDENT)) { //covers assignment and read
+			
+			String name = consume().getText();
+			
+			PixelSelector selector = PixelSelector();
+			
+			if (isKind(Kind.ASSIGN)) { //assignment
+				consume();
+				Expr Expr = Expr();
+				return new AssignmentStatement(f, name, selector, Expr);
+				
+			} else { //read
+				match(Kind.LARROW);
+				Expr Expr = Expr();
+				return new ReadStatement(f, name, selector, Expr);
+			}
+			
+		} else if (isKind(Kind.KW_WRITE)) {
+			consume();
+			Expr Expr1 = Expr();
+			match(Kind.RARROW);
+			Expr Expr2 = Expr();
+			return new WriteStatement(f, Expr1, Expr2);
+			
+		}
+		match(Kind.RETURN);
+		Expr Expr = Expr();
+		return new ReturnStatement(f, Expr);
+		
 	}
 
 	IToken match(Kind k) throws PLCException {
