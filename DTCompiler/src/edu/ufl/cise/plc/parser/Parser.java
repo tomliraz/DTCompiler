@@ -28,55 +28,71 @@ public class Parser implements IParser {
 		return Expr();
 	}
 	
-	Program program() throws PLCException {
-		IToken type;
-		IToken name;
-		List<NameDef> params = new ArrayList<NameDef>();
-		List<ASTNode> decsAndStatements = new ArrayList<ASTNode>();
-		
-		if(isKind(Kind.TYPE, Kind.KW_VOID)) {
-			type = consume();
-			name = match(Kind.IDENT);
-			match(Kind.LPAREN);
-			if(!isKind(Kind.RPAREN)) {
-				params.add(nameDef());
-				while(!isKind(Kind.RPAREN)) {
-					match(Kind.COMMA);
-					params.add(nameDef());
-				}
-			}
-			while(!isKind(Kind.EOF)) {
-				if(isKind(Kind.TYPE)) {
-					decsAndStatements.add(nameDef());
-				} else {
-					decsAndStatements.add(statement());
-				}
-				match(Kind.SEMI);
-			}
-			return new Program(name, Types.Type.toType(type.getText()), name.getText(), params, decsAndStatements);
-		}
-		
-		throw new SyntaxException("Expected type.", t.getSourceLocation());
-		
-	}
-	
-	NameDef nameDef() throws PLCException {
-		IToken type = match(Kind.TYPE);
-		Dimension dim = null;
-		if(isKind(Kind.LSQUARE))
-			dim = dimension();
-						
-		
-		return new NameDef(t, t, t);
-	}
-	
-	Dimension dimension() {
-		return null;
-	}
-	
-	Statement statement() {
-		return null;
-	}
+	Program Program() throws PLCException {
+        IToken type;
+        IToken name;
+        List<NameDef> params = new ArrayList<NameDef>();
+        List<ASTNode> decsAndStatements = new ArrayList<ASTNode>();
+
+        if (isKind(Kind.TYPE, Kind.KW_VOID)) {
+            type = consume();
+            name = match(Kind.IDENT);
+            match(Kind.LPAREN);
+            if (!isKind(Kind.RPAREN)) {
+                params.add(NameDef());
+                while (!isKind(Kind.RPAREN)) {
+                    match(Kind.COMMA);
+                    params.add(NameDef());
+                }
+            }
+            while (!isKind(Kind.EOF)) {
+                if (isKind(Kind.TYPE)) {
+                    decsAndStatements.add(Declaration());
+                } else {
+                    decsAndStatements.add(Statement());
+                }
+                match(Kind.SEMI);
+            }
+            return new Program(name, Types.Type.toType(type.getText()), name.getText(), params, decsAndStatements);
+        }
+
+        throw new SyntaxException("Expected type.", t.getSourceLocation());
+
+    }
+
+    NameDef NameDef() throws PLCException {
+        IToken type = match(Kind.TYPE);
+        Dimension dim = Dimension();
+        IToken name = consume();
+        if (dim != null)
+            return new NameDefWithDim(type, type.getText(), name.getText(), dim);
+        return new NameDef(type, type.getText(), name.getText());
+    }
+
+    Dimension Dimension() throws PLCException {
+        if (isKind(Kind.LSQUARE)) {
+            IToken f_selector = t;
+            match(Kind.LSQUARE);
+            Expr e1 = Expr();
+            match(Kind.COMMA);
+            Expr e2 = Expr();
+            match(Kind.RSQUARE);
+            return new Dimension(f_selector, e1, e2);
+        }
+        return null;
+    }
+
+    Declaration Declaration() throws PLCException {
+        IToken f = t;
+        NameDef ndef = NameDef();
+        IToken op = null;
+        Expr expr = null;
+        if (isKind(Kind.ASSIGN, Kind.LARROW)) {
+            op = consume();
+            expr = Expr();
+        }
+        return new VarDeclaration(f, ndef, op, expr);
+    }
 
 	Expr Expr() throws PLCException {
 		if (t.getKind() == Kind.KW_IF) {
