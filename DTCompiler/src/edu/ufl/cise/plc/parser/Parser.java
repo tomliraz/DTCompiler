@@ -254,7 +254,7 @@ public class Parser implements IParser {
         } else if (isKind(Kind.COLOR_CONST)) {
             return new ColorConstExpr(consume());
         } else if (isKind(Kind.KW_CONSOLE)) {
-            return new IdentExpr(consume());
+            return new ConsoleExpr(consume());
         } else if (isKind(Kind.LANGLE)) {
             consume();
             Expr temp1 = Expr();
