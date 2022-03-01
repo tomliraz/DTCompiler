@@ -25,7 +25,7 @@ public class Parser implements IParser {
 
 	@Override
 	public ASTNode parse() throws PLCException {
-		return Expr();
+		return Program();
 	}
 
 	Program Program() throws PLCException {
@@ -45,6 +45,7 @@ public class Parser implements IParser {
 					params.add(NameDef());
 				}
 			}
+			consume();
 			while (!isKind(Kind.EOF)) {
 				if (isKind(Kind.TYPE)) {
 					decsAndStatements.add(Declaration());
