@@ -59,14 +59,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		stringLitExpr.setType(Type.STRING);
+		return Type.STRING;
 	}
 
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		intLitExpr.setType(Type.INT);
+		return Type.INT;
 	}
 
 	@Override
@@ -77,8 +77,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		colorConstExpr.setType(Type.COLOR);
+		return Type.COLOR;
 	}
 
 	@Override
@@ -131,25 +131,168 @@ public class TypeCheckVisitor implements ASTVisitor {
 		//return the type for convenience in this visitor.
 		return resultType;
 	}
-
-
+			
 	//This method has several cases. Work incrementally and test as you go. 
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		Kind op = binaryExpr.getOp().getKind();
+		
+		Expr leftExpr = binaryExpr.getLeft();
+		Expr rightExpr = binaryExpr.getRight();
+		
+		Type leftType = (Type) leftExpr.visit(this, arg);
+		Type rightType = (Type) rightExpr.visit(this, arg);
+		
+		Type inferredType = switch (op) {
+		case AND, OR -> {
+			check(leftType == Type.BOOLEAN, binaryExpr, "incompatible types for binaryExpr");
+			check(rightType == Type.BOOLEAN, binaryExpr, "incompatible types for binaryExpr");
+			yield Type.BOOLEAN;
+		}
+		case EQUALS, NOT_EQUALS -> {
+			check(leftType == rightType, binaryExpr, "incompatible types for binaryExpr");
+			yield Type.BOOLEAN;
+		}
+		case PLUS, MINUS -> {
+			if(leftType == Type.INT) {
+				if(rightType == Type.INT)
+					yield Type.INT;
+				else if(rightType == Type.FLOAT) {
+					leftExpr.setCoerceTo(Type.FLOAT);
+					yield Type.FLOAT;
+				}
+			}
+			else if(leftType == Type.FLOAT) {
+				if(rightType == Type.INT) {
+					rightExpr.setCoerceTo(Type.FLOAT);
+					yield Type.FLOAT;
+				}
+				else if(rightType == Type.FLOAT)
+					yield Type.FLOAT;
+			}
+			else if(leftType == Type.COLOR) {
+				if(rightType == Type.COLOR)
+					yield Type.COLOR;
+				else if(rightType == Type.COLORFLOAT) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+			}
+			else if(leftType == Type.COLORFLOAT) {
+				if(rightType == Type.COLOR) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+				else if(rightType == Type.COLORFLOAT)
+					yield Type.COLORFLOAT;
+			}
+			else if(leftType == Type.IMAGE && rightType == Type.IMAGE)
+				yield Type.IMAGE;
+			
+			throw new TypeCheckException("incompatible types for binaryExpr", binaryExpr.getSourceLoc());
+		}
+		case TIMES, DIV, MOD -> {
+			if(leftType == Type.INT) {
+				if(rightType == Type.INT)
+					yield Type.INT;
+				else if(rightType == Type.FLOAT) {
+					leftExpr.setCoerceTo(Type.FLOAT);
+					yield Type.FLOAT;
+				}
+				else if(rightType == Type.COLOR) {
+					leftExpr.setCoerceTo(Type.COLOR);
+					yield Type.COLOR;
+				}
+			}
+			else if(leftType == Type.FLOAT) {
+				if(rightType == Type.INT) {
+					rightExpr.setCoerceTo(Type.FLOAT);
+					yield Type.FLOAT;
+				}
+				else if(rightType == Type.FLOAT)
+					yield Type.FLOAT;
+				else if(rightType == Type.COLOR) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					rightExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+			}
+			else if(leftType == Type.COLOR) {
+				if(rightType == Type.COLOR)
+					yield Type.COLOR;
+				else if(rightType == Type.COLORFLOAT) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+				else if(rightType == Type.INT) {
+					rightExpr.setCoerceTo(Type.COLOR);
+					yield Type.COLOR;
+				}
+				else if(rightType == Type.FLOAT) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					rightExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+			}
+			else if(leftType == Type.COLORFLOAT) {
+				if(rightType == Type.COLOR) {
+					leftExpr.setCoerceTo(Type.COLORFLOAT);
+					yield Type.COLORFLOAT;
+				}
+				else if(rightType == Type.COLORFLOAT)
+					yield Type.COLORFLOAT;
+			}
+			else if(leftType == Type.IMAGE && (rightType == Type.IMAGE || rightType == Type.INT || rightType == Type.FLOAT)) {
+				yield Type.IMAGE;
+			}
+			throw new TypeCheckException("incompatible types for binaryExpr", binaryExpr.getSourceLoc());
+		}
+		case LT, LE, GT, GE -> {
+			if(leftType == Type.INT) {
+				if(rightType == Type.INT)
+					yield Type.BOOLEAN;
+				else if(rightType == Type.FLOAT) {
+					leftExpr.setCoerceTo(Type.FLOAT);
+					yield Type.BOOLEAN;
+				}
+			}
+			else if(leftType == Type.FLOAT) {
+				if(rightType == Type.INT) {
+					rightExpr.setCoerceTo(Type.FLOAT);
+					yield Type.BOOLEAN;
+				}
+				else if(rightType == Type.FLOAT)
+					yield Type.BOOLEAN;
+			}
+			throw new TypeCheckException("incompatible types for binaryExpr", binaryExpr.getSourceLoc());
+		}
+		default -> throw new TypeCheckException("incompatible operation for binaryExpr", binaryExpr.getSourceLoc());
+		};
+		
+		binaryExpr.setType(inferredType);
+		return inferredType;
+		
 	}
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
+
 		//TODO:  implement this method
 		throw new UnsupportedOperationException("Unimplemented visit method.");
 	}
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		//TODO  implement this method
-		throw new UnsupportedOperationException();
+		Type conditionalType = (Type) conditionalExpr.getCondition().visit(this, arg);
+		check(conditionalType == Type.BOOLEAN, conditionalExpr, "Conditional must be of type boolean.");
+		Type trueCaseType = (Type) conditionalExpr.getTrueCase().visit(this, arg);
+		Type falseCaseType = (Type) conditionalExpr.getFalseCase().visit(this, arg);
+		
+		//TODO: why do true case and false case have to be equal ???
+		check(trueCaseType == falseCaseType, conditionalExpr, "True case type and false case type must match.");
+		
+		conditionalExpr.setType(trueCaseType);
+		return trueCaseType;
 	}
 
 	@Override

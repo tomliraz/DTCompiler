@@ -1,7 +1,20 @@
 package edu.ufl.cise.plc;
 
-public class SymbolTable {
+import java.util.HashMap;
 
-//TODO:  Implement a symbol table class that is appropriate for this language. 
+import edu.ufl.cise.plc.ast.Declaration;
+
+public class SymbolTable {
+	
+	HashMap<String,Declaration> entries = new HashMap<>();
+
+	public boolean insert(String name, Declaration declaration) {
+		return (entries.putIfAbsent(name,declaration) == null);
+	}
+	
+	public Declaration lookup(String name) {
+		return entries.get(name);
+	}
+
 
 }
