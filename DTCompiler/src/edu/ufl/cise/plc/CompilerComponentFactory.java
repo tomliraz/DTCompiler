@@ -2,6 +2,7 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.lexer.Lexer;
 import edu.ufl.cise.plc.parser.Parser;
+import edu.ufl.cise.plc.TypeCheckVisitor;
 
 //This class eliminates hard coded dependencies on the actual Lexer class.  You can call your lexer whatever you
 //want as long as it implements the ILexer interface and you have provided an appropriate body for the getLexer method.
@@ -21,6 +22,10 @@ public class CompilerComponentFactory {
 	//This method will be invoked to get an instance of your parser.
 	public static IParser getParser(String input) throws LexicalException {
 		return new Parser(input);
+	}
+	
+	public static TypeCheckVisitor getTypeChecker() throws LexicalException {
+		return new TypeCheckVisitor();
 	}
 	
 }
