@@ -276,9 +276,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
-
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		String name = identExpr.getText();
+		
+		Declaration dec = symbolTable.lookup(name);
+		check(dec != null, identExpr, "undefined identifier " + name);
+		check(dec.isInitialized(), identExpr, "using uninitialized variable");
+		identExpr.setDec(dec);
+		
+		Type type = dec.getType();
+		identExpr.setType(type);
+		return type;
 	}
 
 	@Override
@@ -312,11 +319,60 @@ public class TypeCheckVisitor implements ASTVisitor {
 		check(yType == Type.INT, pixelSelector.getY(), "only ints as pixel selector components");
 		return null;
 	}
+	
+	Map<Pair<Type,Type>, Type> assignment_NotImage = Map.of(
+			new Pair<Type,Type>(Type.INT,Type.FLOAT), Type.INT,
+			new Pair<Type,Type>(Type.FLOAT,Type.INT), Type.FLOAT,
+			new Pair<Type,Type>(Type.INT,Type.COLOR), Type.INT,
+			new Pair<Type,Type>(Type.COLOR,Type.INT), Type.COLOR
+			);
+	
+	Map<Pair<Type,Type>, Type> assignment_ImageNoSelector = Map.of(
+			new Pair<Type,Type>(Type.IMAGE,Type.INT), Type.COLOR,
+			new Pair<Type,Type>(Type.IMAGE,Type.FLOAT), Type.COLORFLOAT,
+			new Pair<Type,Type>(Type.IMAGE,Type.COLOR), Type.COLOR,
+			new Pair<Type,Type>(Type.IMAGE,Type.COLORFLOAT), Type.COLORFLOAT
+			);
 
 	@Override
 	//This method several cases--you don't have to implement them all at once.
 	//Work incrementally and systematically, testing as you go.  
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
+		
+		//TODO: INCOMPLETE
+		
+		String name = assignmentStatement.getName();
+		Declaration dec = symbolTable.lookup(name);
+		check(dec != null, assignmentStatement, "undefined identifier " + name);
+		Type targetType = dec.getType();
+		Expr expr = assignmentStatement.getExpr();
+		Type exprType = (Type) expr.visit(this, arg);
+		dec.setInitialized(true);
+		
+		if(targetType != Type.IMAGE) {
+			check(assignmentStatement.getSelector() == null, assignmentStatement, "Did not expect a pixel selector");
+			Type coerceType = assignment_NotImage.get(new Pair<Type,Type>(targetType, exprType));
+			if(targetType == exprType || coerceType != null) {
+				if(targetType != exprType)
+					expr.setCoerceTo(coerceType);
+			}
+			else {
+				check(false, assignmentStatement, "incompatible types in assignment statement");
+			}
+		} else if(targetType == Type.IMAGE && assignmentStatement.getSelector() == null) {
+			Type coerceType = assignment_NotImage.get(new Pair<Type,Type>(targetType, exprType));
+			if(targetType == exprType || coerceType != null) {
+				if(targetType != exprType)
+					expr.setCoerceTo(coerceType);
+			}
+			else {
+				check(false, assignmentStatement, "incompatible types in assignment statement");
+			}
+		} else {
+			
+		}
+		
+		
 		//TODO:  implement this method
 		throw new UnsupportedOperationException("Unimplemented visit method.");
 	}
@@ -334,12 +390,42 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		String name = readStatement.getName();
+		Declaration dec = symbolTable.lookup(readStatement.getName());
+		check(dec != null, readStatement, "undefined identifier " + name);
+		Type rhsType = (Type) readStatement.getSource().visit(this, arg);
+		
+		check(readStatement.getSelector() == null, readStatement, 
+				"A read statement cannot have a PixelSelector");
+		check(rhsType == Type.CONSOLE || rhsType == Type.STRING, readStatement, 
+				"The right hand side type must be CONSOLE or STRING");
+		
+		dec.setInitialized(true);
+		readStatement.setTargetDec(dec);
+		return null;
 	}
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
+		
+		//TODO: implement assignmentCompatible()
+		
+		declaration.getNameDef().visit(this, arg);
+		
+		String name = declaration.getName();
+		boolean inserted = symbolTable.insert(name,declaration);
+		check(inserted, declaration, "variable " + name + "already declared");
+		Expr initializer = declaration.getExpr();
+		if (initializer != null) {
+		//infer type of initializer
+		Type initializerType = (Type) initializer.visit(this,arg);
+		check(assignmentCompatible(declaration.getType(), initializerType),declaration,
+		"type of expression and declared type do not match");
+		declaration.setInitialized(true);
+		}
+		return null;
+
+		
 		//TODO:  implement this method
 		throw new UnsupportedOperationException("Unimplemented visit method.");
 	}
