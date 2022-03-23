@@ -405,9 +405,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-
+		
+		
 		declaration.getNameDef().visit(this, arg);
 		declaration.setInitialized(true);
+		
 		Type right = null;
 		Type left = declaration.getNameDef().getType();
 		if (declaration.getExpr() != null) {
@@ -423,8 +425,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 		if (declaration.getOp() != null) {
 			if (declaration.getOp().getKind() == Kind.ASSIGN) {
-
-				check(assignment_HasSelector.get(new Pair<Type, Type>(left, right)) != null, declaration, "incompatible types in declaration");
+				check(left == right || assignment_NoSelector.get(new Pair<Type, Type>(left, right)) != null, declaration, "incompatible types in declaration");
 	
 			} else if (declaration.getOp().getKind() == Kind.LARROW) {
 				check(right == Type.CONSOLE || right == Type.STRING, declaration, "must have type console or string");
