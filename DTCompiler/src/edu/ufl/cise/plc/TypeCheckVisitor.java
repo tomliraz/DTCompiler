@@ -366,6 +366,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
+		Type sourceType = (Type) writeStatement.getSource().visit(this, arg);
 		Type destType = (Type) writeStatement.getDest().visit(this, arg);
 		check(destType == Type.STRING || destType == Type.CONSOLE, writeStatement,
 				"illegal destination type for write");
