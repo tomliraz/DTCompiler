@@ -408,8 +408,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 		
 		
 		declaration.getNameDef().visit(this, arg);
-		declaration.setInitialized(true);
-		
 		Type right = null;
 		Type left = declaration.getNameDef().getType();
 		if (declaration.getExpr() != null) {
@@ -424,8 +422,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 			declaration.getDim().visit(this, arg);
 
 		if (declaration.getOp() != null) {
+			declaration.getNameDef().setInitialized(true);
 			if (declaration.getOp().getKind() == Kind.ASSIGN) {
-				check(left == right || assignment_NoSelector.get(new Pair<Type, Type>(left, right)) != null, declaration, "incompatible types in declaration");
+				Type coercedType = assignment_NoSelector.get(new Pair<Type, Type>(left, right));
+				check(left == right || coercedType != null, declaration, "incompatible types in declaration");
+				declaration.getExpr().setCoerceTo(coercedType);
+				
 	
 			} else if (declaration.getOp().getKind() == Kind.LARROW) {
 				check(right == Type.CONSOLE || right == Type.STRING, declaration, "must have type console or string");
