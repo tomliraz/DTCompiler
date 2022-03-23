@@ -331,7 +331,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 	// This method several cases--you don't have to implement them all at once.
 	// Work incrementally and systematically, testing as you go.
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-		//:)
 		
 		String name = assignmentStatement.getName();
 		Declaration dec = symbolTable.lookup(name);
@@ -340,9 +339,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 		Expr expr = assignmentStatement.getExpr();
 		dec.setInitialized(true);
 
-		if (assignmentStatement.getSelector() != null) {
+		if (assignmentStatement.getSelector() == null) {
 			Type exprType = (Type) expr.visit(this, arg);
-			check(assignmentStatement.getSelector() == null, assignmentStatement, "Did not expect a pixel selector");
 			Type coerceType = assignment_NoSelector.get(new Pair<Type, Type>(targetType, exprType));
 			if (targetType == exprType || coerceType != null) {
 				if (targetType != exprType)
@@ -351,7 +349,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 				check(false, assignmentStatement, "incompatible types in assignment statement");
 			}
 		}  else if (targetType == Type.IMAGE && assignmentStatement.getSelector() != null) {
-			assignmentStatement.getSelector().visit(this, arg);
+			
 			
 			PixelSelector selector = assignmentStatement.getSelector();
 			
@@ -361,9 +359,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 			NameDef Xdef = new NameDef(selector.getX().getFirstToken(), "int", selector.getX().getText()); //<3 code very fun :)
 			NameDef Ydef = new NameDef(selector.getY().getFirstToken(), "int", selector.getY().getText()); 
 			
-			check(symbolTable.insert(Xdef.getName(), Xdef) == false, assignmentStatement, "variable " + Xdef.getName() + "already declared");
-			check(symbolTable.insert(Ydef.getName(), Ydef) == false, assignmentStatement, "variable " + Ydef.getName() + "already declared");
+			Xdef.setInitialized(true);
+			Ydef.setInitialized(true);
 			
+			check(symbolTable.insert(Xdef.getName(), Xdef) == true, assignmentStatement, "variable " + Xdef.getName() + " already declared");
+			check(symbolTable.insert(Ydef.getName(), Ydef) == true, assignmentStatement, "variable " + Ydef.getName() + " already declared");
+			
+			assignmentStatement.getSelector().visit(this, arg);
 			Type exprType = (Type) expr.visit(this, arg);
 			
 			Type coerceType = assignment_HasSelector.get(new Pair<Type, Type>(targetType, exprType));
@@ -372,8 +374,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 			
 			symbolTable.remove(Xdef.getName());
 			symbolTable.remove(Ydef.getName());
+		} else {
+			check(false, assignmentStatement, "incompatible types in assignment statement");
 		}
-
 		return null;
 	}
 
