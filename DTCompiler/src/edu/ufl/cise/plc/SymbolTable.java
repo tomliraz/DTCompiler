@@ -16,5 +16,7 @@ public class SymbolTable {
 		return entries.get(name);
 	}
 
-
+	public boolean remove(String name) {
+		return (entries.remove(name) != null); //will return the old value if it exists (meaning true), returns null if it did not exist
+	}
 }
