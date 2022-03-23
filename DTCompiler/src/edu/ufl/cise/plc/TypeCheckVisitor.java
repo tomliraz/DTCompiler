@@ -311,57 +311,70 @@ public class TypeCheckVisitor implements ASTVisitor {
 		return null;
 	}
 
-	Map<Pair<Type, Type>, Type> assignment_NotImage = Map.of(new Pair<Type, Type>(Type.INT, Type.FLOAT), Type.INT,
-			new Pair<Type, Type>(Type.FLOAT, Type.INT), Type.FLOAT, new Pair<Type, Type>(Type.INT, Type.COLOR),
-			Type.INT, new Pair<Type, Type>(Type.COLOR, Type.INT), Type.COLOR);
-
-	Map<Pair<Type, Type>, Type> assignment_ImageNoSelector = Map.of(new Pair<Type, Type>(Type.IMAGE, Type.INT),
-			Type.COLOR, new Pair<Type, Type>(Type.IMAGE, Type.FLOAT), Type.COLORFLOAT,
-			new Pair<Type, Type>(Type.IMAGE, Type.COLOR), Type.COLOR, new Pair<Type, Type>(Type.IMAGE, Type.COLORFLOAT),
-			Type.COLORFLOAT);
-
+	Map<Pair<Type, Type>, Type> assignment_NoSelector = Map.of(
+			new Pair<Type, Type>(Type.INT, Type.FLOAT), Type.INT,
+			new Pair<Type, Type>(Type.FLOAT, Type.INT), Type.FLOAT, 
+			new Pair<Type, Type>(Type.INT, Type.COLOR),Type.INT, 
+			new Pair<Type, Type>(Type.COLOR, Type.INT), Type.COLOR,
+			new Pair<Type, Type>(Type.IMAGE, Type.INT),Type.COLOR, 
+			new Pair<Type, Type>(Type.IMAGE, Type.FLOAT), Type.COLORFLOAT,
+			new Pair<Type, Type>(Type.IMAGE, Type.COLOR), Type.COLOR, 
+			new Pair<Type, Type>(Type.IMAGE, Type.COLORFLOAT), Type.COLORFLOAT);
+	
+	Map<Pair<Type, Type>, Type> assignment_HasSelector = Map.of(
+			new Pair<Type, Type>(Type.IMAGE, Type.COLOR),Type.COLOR, 
+			new Pair<Type, Type>(Type.IMAGE, Type.COLORFLOAT), Type.COLOR,
+			new Pair<Type, Type>(Type.IMAGE, Type.FLOAT), Type.COLOR, 
+			new Pair<Type, Type>(Type.IMAGE, Type.INT), Type.COLOR);
+	
 	@Override
 	// This method several cases--you don't have to implement them all at once.
 	// Work incrementally and systematically, testing as you go.
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-
-		// TODO: INCOMPLETE
-
+		//:)
+		
 		String name = assignmentStatement.getName();
 		Declaration dec = symbolTable.lookup(name);
 		check(dec != null, assignmentStatement, "undefined identifier " + name);
 		Type targetType = dec.getType();
 		Expr expr = assignmentStatement.getExpr();
-		Type exprType = (Type) expr.visit(this, arg);
 		dec.setInitialized(true);
 
-		if (targetType != Type.IMAGE) {
+		if (assignmentStatement.getSelector() != null) {
+			Type exprType = (Type) expr.visit(this, arg);
 			check(assignmentStatement.getSelector() == null, assignmentStatement, "Did not expect a pixel selector");
-			Type coerceType = assignment_NotImage.get(new Pair<Type, Type>(targetType, exprType));
+			Type coerceType = assignment_NoSelector.get(new Pair<Type, Type>(targetType, exprType));
 			if (targetType == exprType || coerceType != null) {
 				if (targetType != exprType)
 					expr.setCoerceTo(coerceType);
 			} else {
 				check(false, assignmentStatement, "incompatible types in assignment statement");
 			}
-		} else if (targetType == Type.IMAGE && assignmentStatement.getSelector() == null) {
-			Type coerceType = assignment_ImageNoSelector.get(new Pair<Type, Type>(targetType, exprType));
-			if (targetType == exprType || coerceType != null) {
-				if (targetType != exprType)
-					expr.setCoerceTo(coerceType);
-			} else {
-				check(false, assignmentStatement, "incompatible types in assignment statement");
-			}
-		} else if (targetType == Type.IMAGE && assignmentStatement.getSelector() != null) {
+		}  else if (targetType == Type.IMAGE && assignmentStatement.getSelector() != null) {
 			assignmentStatement.getSelector().visit(this, arg);
-			if (assignmentStatement.getSelector().getX().getType() != null && true) { // wronggnngngngng
-
-			}
-
+			
+			PixelSelector selector = assignmentStatement.getSelector();
+			
+			check(selector.getX().getClass() == IdentExpr.class, assignmentStatement, "X must be an identexpr");
+			check(selector.getY().getClass() == IdentExpr.class, assignmentStatement, "Y must be an identexpr");
+			
+			NameDef Xdef = new NameDef(selector.getX().getFirstToken(), "int", selector.getX().getText()); //<3 code very fun :)
+			NameDef Ydef = new NameDef(selector.getY().getFirstToken(), "int", selector.getY().getText()); 
+			
+			check(symbolTable.insert(Xdef.getName(), Xdef) == false, assignmentStatement, "variable " + Xdef.getName() + "already declared");
+			check(symbolTable.insert(Ydef.getName(), Ydef) == false, assignmentStatement, "variable " + Ydef.getName() + "already declared");
+			
+			Type exprType = (Type) expr.visit(this, arg);
+			
+			Type coerceType = assignment_HasSelector.get(new Pair<Type, Type>(targetType, exprType));
+			check(coerceType != null, assignmentStatement, "incompatible types in assignment statement");
+			expr.setCoerceTo(coerceType);
+			
+			symbolTable.remove(Xdef.getName());
+			symbolTable.remove(Ydef.getName());
 		}
 
-		// TODO: implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		return null;
 	}
 
 	@Override
@@ -411,19 +424,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 		if (declaration.getOp() != null) {
 			if (declaration.getOp().getKind() == Kind.ASSIGN) {
 
+				check(assignment_HasSelector.get(new Pair<Type, Type>(left, right)) != null, declaration, "incompatible types in declaration");
+	
 			} else if (declaration.getOp().getKind() == Kind.LARROW) {
 				check(right == Type.CONSOLE || right == Type.STRING, declaration, "must have type console or string");
 			}
 		}
 
-		
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		return null;
 	}
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {
 		// TODO: this method is incomplete, finish it.
-
+		List<NameDef> params = program.getParams();
+		for(NameDef param : params) {
+			param.setInitialized(true);
+			param.visit(this, arg);
+		}
 		// Save root of AST so return type can be accessed in return statements
 		root = program;
 
