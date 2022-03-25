@@ -400,6 +400,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		check(readStatement.getSelector() == null, readStatement, "A read statement cannot have a PixelSelector");
 		check(rhsType == Type.CONSOLE || rhsType == Type.STRING, readStatement,
 				"The right hand side type must be CONSOLE or STRING");
+		
+		if(rhsType == Type.CONSOLE)
+			readStatement.getSource().setCoerceTo(dec.getType());
+
 
 		dec.setInitialized(true);
 		readStatement.setTargetDec(dec);
@@ -408,8 +412,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-		
-		
 		declaration.getNameDef().visit(this, arg);
 		Type right = null;
 		Type left = declaration.getNameDef().getType();
@@ -434,6 +436,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 	
 			} else if (declaration.getOp().getKind() == Kind.LARROW) {
 				check(right == Type.CONSOLE || right == Type.STRING, declaration, "must have type console or string");
+				
+				if(right == Type.CONSOLE)
+					declaration.getExpr().setCoerceTo(left);
 			}
 		}
 
@@ -448,6 +453,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 			param.setInitialized(true);
 			param.visit(this, arg);
 		}
+		
+		symbolTable.insert(program.getName(), new NameDef(program.getFirstToken(), 
+				"void", program.getName()));
+		
 		// Save root of AST so return type can be accessed in return statements
 		root = program;
 
