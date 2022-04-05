@@ -1,5 +1,7 @@
 package edu.ufl.cise.plc.codegenerator;
 
-public class CodeGenVisitor {
+import edu.ufl.cise.plc.ast.ASTVisitor;
+
+public class CodeGenVisitor implements ASTVisitor {
 
 }
