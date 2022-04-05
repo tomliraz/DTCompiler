@@ -1,9 +1,12 @@
-package edu.ufl.cise.plc;
+package edu.ufl.cise.plc.typechecker;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.ufl.cise.plc.IToken;
+import edu.ufl.cise.plc.SymbolTable;
+import edu.ufl.cise.plc.TypeCheckException;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.ASTVisitor;
