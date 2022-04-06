@@ -1,5 +1,9 @@
-package edu.ufl.cise.plc.codegenerator;
+package edu.ufl.cise.plc;
 
+import java.util.List;
+
+import edu.ufl.cise.plc.IToken.Kind;
+import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.ASTVisitor;
 import edu.ufl.cise.plc.ast.AssignmentStatement;
 import edu.ufl.cise.plc.ast.BinaryExpr;
@@ -25,11 +29,20 @@ import edu.ufl.cise.plc.ast.VarDeclaration;
 import edu.ufl.cise.plc.ast.WriteStatement;
 
 public class CodeGenVisitor implements ASTVisitor {
+	
+	String packageName;
+	
+	public CodeGenVisitor(String packageName) {
+		this.packageName = packageName;
+    }
 
 	@Override
 	public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if(booleanLitExpr.getValue())
+			((StringBuilder) arg).append("true");
+		else
+			((StringBuilder) arg).append("false");
+		return arg;
 	}
 
 	@Override
@@ -58,7 +71,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitConsoleExpr(ConsoleExpr consoleExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
+		String coerceType = consoleExpr.getCoerceTo().name().substring(0, 1) + consoleExpr.getCoerceTo().name().substring(1).toLowerCase();
+		
+		((StringBuilder) arg).append("( " + coerceType + ") " //SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUS---semicolon---------------v
+				+ "ConsoleIO.readValueFromConsole( \""+ consoleExpr.getCoerceTo().name() + "\", \"Enter " + coerceType + ":\")");
+		
 		return null;
 	}
 
@@ -76,8 +93,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append("( ");
+		binaryExpr.getLeft().visit(this, arg);
+		((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");
+		binaryExpr.getRight().visit(this, arg);
+		((StringBuilder) arg).append(" )");
+		return arg;
 	}
 
 	@Override
@@ -88,8 +109,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append("( ");
+		conditionalExpr.getCondition().visit(this, arg);
+		((StringBuilder) arg).append(" ) ? ");
+		conditionalExpr.getTrueCase().visit(this, arg);
+		((StringBuilder) arg).append(" : ");
+		conditionalExpr.getFalseCase().visit(this, arg);
+		return arg;
 	}
 
 	@Override
@@ -124,14 +150,35 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder code = new StringBuilder();
+        code.append("package " + packageName + ";\n");
+		
+		code.append("public class " + program.getName() + " {\n"
+				+ "\tpublic static " + program.getReturnType() + " apply(");
+		
+		List<NameDef> params = program.getParams();
+		
+		for(int i = 0; i < params.size(); i++) {
+			params.get(i).visit(this, code);
+			if(i != params.size() - 1)
+				code.append(", ");
+		}
+		code.append(") {");
+		
+		List<ASTNode> decsAndStatements = program.getDecsAndStatements();
+		
+		for(ASTNode node : decsAndStatements)
+			node.visit(this, code);
+		
+		code.append("\t}\n}");
+		
+		return code;
 	}
 
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append(nameDef.getType() + " " + nameDef.getName());
+		return arg;
 	}
 
 	@Override
@@ -148,8 +195,18 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if(declaration.getOp() == null) {
+			declaration.getNameDef().visit(this, arg);
+			((StringBuilder) arg).append(";\n");
+		}
+		else if(declaration.getOp().getKind() == Kind.ASSIGN || declaration.getOp().getKind() == Kind.LARROW) {
+			declaration.getNameDef().visit(this, arg);
+			((StringBuilder) arg).append(" = ");
+			declaration.getExpr().visit(this, arg);
+		} else {
+			throw new UnsupportedOperationException("Not yet implemented");
+		}
+		return arg;
 	}
 
 	@Override

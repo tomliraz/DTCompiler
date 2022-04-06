@@ -2,9 +2,7 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.lexer.Lexer;
 import edu.ufl.cise.plc.parser.Parser;
-import edu.ufl.cise.plc.typechecker.TypeCheckVisitor;
 import edu.ufl.cise.plc.ast.ASTVisitor;
-import edu.ufl.cise.plc.codegenerator.CodeGenVisitor;
 
 //This class eliminates hard coded dependencies on the actual Lexer class.  You can call your lexer whatever you
 //want as long as it implements the ILexer interface and you have provided an appropriate body for the getLexer method.
