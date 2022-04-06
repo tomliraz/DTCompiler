@@ -131,8 +131,26 @@ public class CodeGenVisitor implements ASTVisitor {
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 		((StringBuilder) arg).append("( ");
 		binaryExpr.getLeft().visit(this, arg);
-		((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");
-		binaryExpr.getRight().visit(this, arg);
+		if (binaryExpr.getRight().getType() == Type.STRING && binaryExpr.getLeft().getType() == Type.STRING) {
+			Kind op = binaryExpr.getOp().getKind();
+			
+			if (op == Kind.EQUALS ) {
+				((StringBuilder) arg).append(".equals( ");	
+				binaryExpr.getRight().visit(this, arg);
+				((StringBuilder) arg).append(" )");
+			} else if(op ==  Kind.NOT_EQUALS) {
+				((StringBuilder) arg).append(".equals( ");	
+				binaryExpr.getRight().visit(this, arg);
+				((StringBuilder) arg).append(" ) == false");
+			} else {
+				((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");
+				binaryExpr.getRight().visit(this, arg);
+			}
+		} else {
+			((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");	
+			binaryExpr.getRight().visit(this, arg);
+		}
+		
 		((StringBuilder) arg).append(" )");
 		return arg;
 	}
@@ -181,6 +199,13 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
 		((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
+		if(assignmentStatement.getExpr().getCoerceTo() != null) {
+			if (assignmentStatement.getExpr().getCoerceTo() == Type.STRING) {
+				((StringBuilder) arg).append("(String) ");
+			} else {
+				((StringBuilder) arg).append("(" + assignmentStatement.getExpr().getCoerceTo().name().toLowerCase() + ") ");
+			}
+		}
 		assignmentStatement.getExpr().visit(this, arg);
 		((StringBuilder) arg).append(";\n");
 		return arg;
@@ -270,6 +295,13 @@ public class CodeGenVisitor implements ASTVisitor {
 		} else if (declaration.getOp().getKind() == Kind.ASSIGN || declaration.getOp().getKind() == Kind.LARROW) {
 			declaration.getNameDef().visit(this, arg);
 			((StringBuilder) arg).append(" = ");
+			if(declaration.getExpr().getCoerceTo() != null) {
+				if (declaration.getExpr().getCoerceTo() == Type.STRING) {
+					((StringBuilder) arg).append("(String) ");
+				} else {
+					((StringBuilder) arg).append("(" + declaration.getExpr().getCoerceTo().name().toLowerCase() + ") ");
+				}
+			}
 			declaration.getExpr().visit(this, arg);
 			((StringBuilder) arg).append(";\n");
 		} else {
