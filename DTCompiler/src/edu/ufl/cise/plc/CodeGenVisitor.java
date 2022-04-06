@@ -154,12 +154,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		((StringBuilder) arg).append("( ");
+		((StringBuilder) arg).append("( ( ");
 		conditionalExpr.getCondition().visit(this, arg);
 		((StringBuilder) arg).append(" ) ? ");
 		conditionalExpr.getTrueCase().visit(this, arg);
 		((StringBuilder) arg).append(" : ");
 		conditionalExpr.getFalseCase().visit(this, arg);
+		((StringBuilder) arg).append(" )");
 		return arg;
 	}
 
