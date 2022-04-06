@@ -230,7 +230,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
-		((StringBuilder) arg).append(nameDef.getType() + " " + nameDef.getName());
+		if (nameDef.getType() == Type.STRING) {
+			((StringBuilder) arg).append("String " + nameDef.getName());
+		} else {
+			((StringBuilder) arg).append(nameDef.getType().name().toLowerCase() + " " + nameDef.getName());
+		}
 		return arg;
 	}
 
@@ -258,6 +262,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			declaration.getNameDef().visit(this, arg);
 			((StringBuilder) arg).append(" = ");
 			declaration.getExpr().visit(this, arg);
+			((StringBuilder) arg).append(";\n");
 		} else {
 			throw new UnsupportedOperationException("Not yet implemented");
 		}
