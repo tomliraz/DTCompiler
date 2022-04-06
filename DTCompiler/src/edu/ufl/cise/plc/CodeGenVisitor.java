@@ -27,18 +27,19 @@ import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.ast.VarDeclaration;
 import edu.ufl.cise.plc.ast.WriteStatement;
+import edu.ufl.cise.plc.ast.Types.Type;
 
 public class CodeGenVisitor implements ASTVisitor {
-	
+
 	String packageName;
-	
+
 	public CodeGenVisitor(String packageName) {
 		this.packageName = packageName;
-    }
+	}
 
 	@Override
 	public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
-		if(booleanLitExpr.getValue())
+		if (booleanLitExpr.getValue())
 			((StringBuilder) arg).append("true");
 		else
 			((StringBuilder) arg).append("false");
@@ -47,48 +48,80 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append("\"\"\"\n" + stringLitExpr.getValue() + "\"\"\"");
+		return arg;
 	}
 
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+
+		if (intLitExpr.getCoerceTo() != null && intLitExpr.getCoerceTo() != Type.INT) {
+
+			((StringBuilder) arg).append("(" + intLitExpr.getCoerceTo().name().toLowerCase() + ") ");
+		}
+
+		((StringBuilder) arg).append(intLitExpr.getValue());
+		return arg;
 	}
 
 	@Override
 	public Object visitFloatLitExpr(FloatLitExpr floatLitExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if (floatLitExpr.getCoerceTo() != null && floatLitExpr.getCoerceTo() != Type.FLOAT) {
+
+			((StringBuilder) arg).append("( " + floatLitExpr.getCoerceTo().name().toLowerCase() + " ) ");
+
+		}
+
+		((StringBuilder) arg).append(floatLitExpr.getValue() + "f");
+		return arg;
 	}
 
 	@Override
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
 	}
 
 	@Override
 	public Object visitConsoleExpr(ConsoleExpr consoleExpr, Object arg) throws Exception {
-		String coerceType = consoleExpr.getCoerceTo().name().substring(0, 1) + consoleExpr.getCoerceTo().name().substring(1).toLowerCase();
-		
-		((StringBuilder) arg).append("( " + coerceType + ") " //SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUS---semicolon---------------v
-				+ "ConsoleIO.readValueFromConsole( \""+ consoleExpr.getCoerceTo().name() + "\", \"Enter " + coerceType + ":\")");
-		
-		return null;
+
+		String coerceType = switch (consoleExpr.getCoerceTo()) {
+		// :)
+		case BOOLEAN -> "Boolean";
+		// case Type.COLOR -> ;
+		// case Type.CONSOLE-> "";
+		case FLOAT -> "Float";
+		// case Type.IMAGE -> ;
+		case INT -> "Integer";
+		case STRING -> "String";
+		// case Type.VOID -> ;
+		default -> throw new IllegalArgumentException("Unexpected type value: " + consoleExpr.getCoerceTo().name());
+		};
+
+		((StringBuilder) arg).append("( " + coerceType + ") " // SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUS---semicolon---------------v
+				+ "ConsoleIO.readValueFromConsole( \"" + consoleExpr.getCoerceTo().name() + "\", \"Enter " + coerceType
+				+ ":\")");
+
+		return arg;
 	}
 
 	@Override
 	public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
 	}
 
 	@Override
 	public Object visitUnaryExpr(UnaryExpr unaryExpression, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if (unaryExpression.getOp().getKind() == Kind.BANG || unaryExpression.getOp().getKind() == Kind.MINUS) {
+			((StringBuilder) arg)
+					.append("( " + unaryExpression.getOp().getText() + " " + unaryExpression.getExpr() + " )");
+		} else {
+			throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		}
+		return arg;
 	}
 
 	@Override
@@ -103,8 +136,17 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if (identExpr.getCoerceTo() != null && identExpr.getCoerceTo() != identExpr.getType()) {
+
+			if (identExpr.getCoerceTo() == Type.STRING) {
+				((StringBuilder) arg).append("(String) ");
+			} else {
+				((StringBuilder) arg).append("(" + identExpr.getCoerceTo().name().toLowerCase() + ") ");
+			}
+		}
+
+		((StringBuilder) arg).append(identExpr.getText());
+		return arg;
 	}
 
 	@Override
@@ -121,57 +163,68 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitDimension(Dimension dimension, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
 	}
 
 	@Override
 	public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
 	}
 
 	@Override
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
+		assignmentStatement.getExpr().visit(this, arg);
+		((StringBuilder) arg).append(";\n");
+		return arg;
 	}
 
 	@Override
 	public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if (Type.CONSOLE == writeStatement.getDest().getType()) {
+			((StringBuilder) arg).append("ConsoleIO.console.println( ");
+			writeStatement.getSource().visit(this, arg);
+			((StringBuilder) arg).append(" );\n");
+		}
+		return arg;
 	}
 
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+
+		((StringBuilder) arg).append(readStatement.getName() + " = ");
+		readStatement.getSource().visit(this, arg);
+		((StringBuilder) arg).append(";\n");
+		return arg;
 	}
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {
 		StringBuilder code = new StringBuilder();
-        code.append("package " + packageName + ";\n");
-		
-		code.append("public class " + program.getName() + " {\n"
-				+ "\tpublic static " + program.getReturnType() + " apply(");
-		
+		code.append("package " + packageName + ";\n");
+
+		code.append("public class " + program.getName() + " {\n" + "\tpublic static " + program.getReturnType()
+				+ " apply(");
+
 		List<NameDef> params = program.getParams();
-		
-		for(int i = 0; i < params.size(); i++) {
+
+		for (int i = 0; i < params.size(); i++) {
 			params.get(i).visit(this, code);
-			if(i != params.size() - 1)
+			if (i != params.size() - 1)
 				code.append(", ");
 		}
 		code.append(") {");
-		
+
 		List<ASTNode> decsAndStatements = program.getDecsAndStatements();
-		
-		for(ASTNode node : decsAndStatements)
+
+		for (ASTNode node : decsAndStatements)
 			node.visit(this, code);
-		
+
 		code.append("\t}\n}");
-		
+
 		return code;
 	}
 
@@ -184,22 +237,24 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitNameDefWithDim(NameDefWithDim nameDefWithDim, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
 	}
 
 	@Override
 	public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		((StringBuilder) arg).append("return ");
+		returnStatement.getExpr().visit(this, arg);
+		((StringBuilder) arg).append(";\n");
+		return arg;
 	}
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-		if(declaration.getOp() == null) {
+		if (declaration.getOp() == null) {
 			declaration.getNameDef().visit(this, arg);
 			((StringBuilder) arg).append(";\n");
-		}
-		else if(declaration.getOp().getKind() == Kind.ASSIGN || declaration.getOp().getKind() == Kind.LARROW) {
+		} else if (declaration.getOp().getKind() == Kind.ASSIGN || declaration.getOp().getKind() == Kind.LARROW) {
 			declaration.getNameDef().visit(this, arg);
 			((StringBuilder) arg).append(" = ");
 			declaration.getExpr().visit(this, arg);
@@ -212,7 +267,9 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
+		// return arg;
+
 	}
 
 }
