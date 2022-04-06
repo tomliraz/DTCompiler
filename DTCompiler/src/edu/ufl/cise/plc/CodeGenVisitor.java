@@ -206,7 +206,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		StringBuilder code = new StringBuilder();
 		code.append("package " + packageName + ";\n");
 
-		code.append("public class " + program.getName() + " {\n" + "\tpublic static " + program.getReturnType()
+		code.append("public class " + program.getName() + " {\n" + "\tpublic static " + program.getReturnType().name().toLowerCase()
 				+ " apply(");
 
 		List<NameDef> params = program.getParams();
@@ -225,7 +225,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 		code.append("\t}\n}");
 
-		return code;
+		return code.toString();
 	}
 
 	@Override
