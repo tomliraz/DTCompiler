@@ -32,6 +32,7 @@ import edu.ufl.cise.plc.ast.Types.Type;
 public class CodeGenVisitor implements ASTVisitor {
 
 	String packageName;
+	String importStatements;
 
 	public CodeGenVisitor(String packageName) {
 		this.packageName = packageName;
@@ -102,7 +103,8 @@ public class CodeGenVisitor implements ASTVisitor {
 		((StringBuilder) arg).append("( " + coerceType + ") " // SUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUS---semicolon---------------v
 				+ "ConsoleIO.readValueFromConsole( \"" + consoleExpr.getCoerceTo().name() + "\", \"Enter " + coerceType
 				+ ":\")");
-
+		
+		importStatements += "import edu.ufl.cise.plc.runtime.ConsoleIO;\n";
 		return arg;
 	}
 
@@ -116,8 +118,9 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitUnaryExpr(UnaryExpr unaryExpression, Object arg) throws Exception {
 		if (unaryExpression.getOp().getKind() == Kind.BANG || unaryExpression.getOp().getKind() == Kind.MINUS) {
-			((StringBuilder) arg)
-					.append("( " + unaryExpression.getOp().getText() + " " + unaryExpression.getExpr() + " )");
+			((StringBuilder) arg).append("( " + unaryExpression.getOp().getText() + " "); 
+					unaryExpression.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(" )");
 		} else {
 			throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
 		}
@@ -145,7 +148,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			}
 		}
 
-		((StringBuilder) arg).append(identExpr.getText());
+		((StringBuilder) arg).append(identExpr.getFirstToken().getText());
 		return arg;
 	}
 
@@ -204,10 +207,15 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {
 		StringBuilder code = new StringBuilder();
-		code.append("package " + packageName + ";\n");
+		importStatements = "package " + packageName + ";\n";
 
-		code.append("public class " + program.getName() + " {\n" + "\tpublic static " + program.getReturnType().name().toLowerCase()
-				+ " apply(");
+		if (program.getReturnType() == Type.STRING) {
+			code.append("public class " + program.getName() + " {\n" + "\tpublic static String apply(");
+		} else {
+			code.append("public class " + program.getName() + " {\n" + "\tpublic static " + program.getReturnType().name().toLowerCase()
+					+ " apply(");
+		}
+		
 
 		List<NameDef> params = program.getParams();
 
@@ -216,7 +224,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			if (i != params.size() - 1)
 				code.append(", ");
 		}
-		code.append(") {");
+		code.append(") {\n");
 
 		List<ASTNode> decsAndStatements = program.getDecsAndStatements();
 
@@ -225,7 +233,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 		code.append("\t}\n}");
 
-		return code.toString();
+		return importStatements + code.toString();
 	}
 
 	@Override
