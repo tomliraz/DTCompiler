@@ -143,8 +143,7 @@ public class CodeGenVisitor implements ASTVisitor {
 				binaryExpr.getRight().visit(this, arg);
 				((StringBuilder) arg).append(" ) == false");
 			} else {
-				((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");
-				binaryExpr.getRight().visit(this, arg);
+				throw new IllegalArgumentException("only = and != are valid for strings, this should never run though.");
 			}
 		} else {
 			((StringBuilder) arg).append(" " + binaryExpr.getOp().getText() + " ");	
