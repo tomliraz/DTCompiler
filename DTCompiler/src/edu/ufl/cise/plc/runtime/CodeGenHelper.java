@@ -2,6 +2,9 @@ package edu.ufl.cise.plc.runtime;
 
 import java.awt.image.BufferedImage;
 
+import edu.ufl.cise.plc.runtime.ImageOps.BoolOP;
+import edu.ufl.cise.plc.runtime.ImageOps.OP;
+
 public class CodeGenHelper {
 	
 	
@@ -29,6 +32,26 @@ public class CodeGenHelper {
 				ImageOps.setColor(image, x, y, c);
 			}
 		return image;
+	}
+	
+	public static boolean binaryImageImageOp(BoolOP op, BufferedImage left, BufferedImage right) {
+		int lwidth = left.getWidth();
+		int rwidth = right.getWidth();
+		int lheight = left.getHeight();
+		int rheight = right.getHeight();
+		if (lwidth != rwidth || lheight != rheight) {
+			throw new PLCRuntimeException("Attempting binary operation on images with unequal sizes");
+		}
+		
+		for (int x = 0; x < lwidth; x++) {
+			for (int y = 0; y < lheight; y++) {
+				ColorTuple leftColor = ColorTuple.unpack(left.getRGB(x, y));
+				ColorTuple rightColor = ColorTuple.unpack(right.getRGB(x, y));
+				if (!ImageOps.binaryTupleOp(op, leftColor, rightColor))
+					return false;
+			}
+		}
+		return true;
 	}
 	
 
