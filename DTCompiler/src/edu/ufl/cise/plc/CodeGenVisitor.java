@@ -140,7 +140,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			unaryExpression.getExpr().visit(this, arg);
 			((StringBuilder) arg).append(" )");
 		} else if (unaryExpression.getOp().getKind() == Kind.COLOR_OP) {
-			addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple");
+			addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
 			if (unaryExpression.getExpr().getType() == Type.INT || unaryExpression.getExpr().getType() == Type.COLOR) {
 				((StringBuilder) arg).append("ColorTuple." + unaryExpression.getOp().getText() + "(");
 				unaryExpression.getExpr().visit(this, arg);
