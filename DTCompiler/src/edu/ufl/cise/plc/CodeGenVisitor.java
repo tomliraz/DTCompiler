@@ -123,14 +123,27 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
-		addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
-		((StringBuilder) arg).append("new ColorTuple(");
-		colorExpr.getRed().visit(this, arg);
-		((StringBuilder) arg).append(", ");
-		colorExpr.getGreen().visit(this, arg);
-		((StringBuilder) arg).append(", ");
-		colorExpr.getBlue().visit(this, arg);
-		((StringBuilder) arg).append(")");
+		
+		if (colorExpr.getRed().getType() == Type.INT) {
+			addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
+			((StringBuilder) arg).append("new ColorTuple(");
+			colorExpr.getRed().visit(this, arg);
+			((StringBuilder) arg).append(", ");
+			colorExpr.getGreen().visit(this, arg);
+			((StringBuilder) arg).append(", ");
+			colorExpr.getBlue().visit(this, arg);
+			((StringBuilder) arg).append(")");
+		} else {
+			addImportStatement("import edu.ufl.cise.plc.runtime.ColorTupleFloat;\n");
+			((StringBuilder) arg).append("new ColorTupleFloat(");
+			colorExpr.getRed().visit(this, arg);
+			((StringBuilder) arg).append(", ");
+			colorExpr.getGreen().visit(this, arg);
+			((StringBuilder) arg).append(", ");
+			colorExpr.getBlue().visit(this, arg);
+			((StringBuilder) arg).append(")");
+		}
+		
 
 		return arg;
 	}
@@ -582,7 +595,7 @@ public class CodeGenVisitor implements ASTVisitor {
 					declaration.getExpr().visit(this, arg);
 					((StringBuilder) arg).append(")");
 					
-				} else if(declaration.getExpr().getType() == Type.FLOAT) {
+				} else if(declaration.getExpr().getType() == Type.FLOAT || declaration.getExpr().getType() == Type.COLORFLOAT) {
 					
 					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsColorFloat(");
 					((StringBuilder) arg).append("new BufferedImage(");
