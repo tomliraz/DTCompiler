@@ -146,7 +146,7 @@ public class CodeGenVisitor implements ASTVisitor {
 				unaryExpression.getExpr().visit(this, arg);
 				((StringBuilder) arg).append(")");
 			} else if (unaryExpression.getExpr().getType() == Type.IMAGE) {
-				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps");
+				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 				((StringBuilder) arg).append("ImageOps.extract");
 				((StringBuilder) arg).append(unaryExpression.getOp().getText().substring(3) + "(");
 				unaryExpression.getExpr().visit(this, arg);
@@ -282,6 +282,7 @@ public class CodeGenVisitor implements ASTVisitor {
 				((StringBuilder) arg).append(";\n");
 
 			} else if (assignmentStatement.getTargetDec().getType() == Type.IMAGE) {
+				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 				String xVar = assignmentStatement.getSelector().getX().getText();
 				String yVar = assignmentStatement.getSelector().getY().getText();
 				
@@ -361,7 +362,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		} else {
 
 			if (assignmentStatement.getTargetDec().getType() == Type.IMAGE) {
-				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps");
+				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps; \n");
 				if (assignmentStatement.getTargetDec().getDim() != null) {
 
 					((StringBuilder) arg).append(assignmentStatement.getName() + " = ImageOps.resize(ImageOps.clone(");

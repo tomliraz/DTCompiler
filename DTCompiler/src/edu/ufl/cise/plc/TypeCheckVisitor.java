@@ -336,6 +336,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		Declaration dec = symbolTable.lookup(name);
 		check(dec != null, assignmentStatement, "undefined identifier " + name);
 		Type targetType = dec.getType();
+	    assignmentStatement.setTargetDec(dec);
 		Expr expr = assignmentStatement.getExpr();
 		dec.setInitialized(true);
 
