@@ -209,7 +209,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		} else if (binaryExpr.getRight().getType() == Type.INT && binaryExpr.getLeft().getType() == Type.IMAGE) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 			((StringBuilder) arg)
-					.append("(ImageOps.binaryImageScalarOp(ImageOps.OP." + binaryExpr.getOp().getKind().toString());
+					.append("ImageOps.binaryImageScalarOp(ImageOps.OP." + binaryExpr.getOp().getKind().toString());
 			((StringBuilder) arg).append(", ");
 			binaryExpr.getLeft().visit(this, arg);
 			((StringBuilder) arg).append(", ");
@@ -523,7 +523,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			}
 		} else if (declaration.getType() == Type.IMAGE) {
 			((StringBuilder) arg).append(" = ");
-			if (declaration.getOp() != null) {
+			if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.LARROW) {
 				addImportStatement("import edu.ufl.cise.plc.runtime.FileURLIO;\n");
 
 				if (declaration.getNameDef().getDim() == null) {
@@ -537,6 +537,11 @@ public class CodeGenVisitor implements ASTVisitor {
 					declaration.getDim().visit(this, arg);
 					((StringBuilder) arg).append(")");
 				}
+			} else if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
+				((StringBuilder) arg).append(declaration.getName() + " = ImageOps.clone(");
+				declaration.getExpr().visit(this, arg);
+				((StringBuilder) arg).append(");\n");
+			
 			} else {
 				if (declaration.getNameDef().getDim() != null) {
 					((StringBuilder) arg).append("new BufferedImage(");
