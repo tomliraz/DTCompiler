@@ -29,6 +29,7 @@ import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.ast.VarDeclaration;
 import edu.ufl.cise.plc.ast.WriteStatement;
+import edu.ufl.cise.plc.runtime.ColorTuple;
 import edu.ufl.cise.plc.ast.Types.Type;
 
 public class CodeGenVisitor implements ASTVisitor {
@@ -59,12 +60,13 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
 
-		if (intLitExpr.getCoerceTo() != null && intLitExpr.getCoerceTo() != Type.INT) {
-
+		if (intLitExpr.getCoerceTo() != null && intLitExpr.getCoerceTo() != Type.INT && intLitExpr.getCoerceTo() != Type.COLOR) {
 			((StringBuilder) arg).append("(" + intLitExpr.getCoerceTo().name().toLowerCase() + ") ");
 		}
-
-		((StringBuilder) arg).append(intLitExpr.getValue());
+		if(intLitExpr.getCoerceTo() == Type.COLOR)
+			((StringBuilder) arg).append("new ColorTuple(" + intLitExpr.getValue() + ")");
+		else
+			((StringBuilder) arg).append(intLitExpr.getValue());
 		return arg;
 	}
 
@@ -153,7 +155,7 @@ public class CodeGenVisitor implements ASTVisitor {
 				((StringBuilder) arg).append(")");
 			}
 		}
-		((StringBuilder) arg).append(";\n");
+		//((StringBuilder) arg).append(";\n");
 		return arg;
 	}
 
@@ -301,7 +303,7 @@ public class CodeGenVisitor implements ASTVisitor {
 						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
 								+ xVar + ", " + yVar + ", ");
 						assignmentStatement.getExpr().visit(this, arg);
-						((StringBuilder) arg).append(");");
+						((StringBuilder) arg).append(");\n");
 
 					} else if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
 
@@ -444,7 +446,10 @@ public class CodeGenVisitor implements ASTVisitor {
 			code.append("public class " + program.getName() + " {\n" + "\tpublic static String apply(");
 		} else if (program.getReturnType() == Type.IMAGE) {
 			code.append("public class " + program.getName() + " {\n" + "\tpublic static BufferedImage apply(");
-		} else {
+		} else if (program.getReturnType() == Type.COLOR) {
+			code.append("public class " + program.getName() + " {\n" + "\tpublic static ColorTuple apply(");
+		}
+		else {
 		
 
 			code.append("public class " + program.getName() + " {\n" + "\tpublic static "
@@ -538,8 +543,40 @@ public class CodeGenVisitor implements ASTVisitor {
 					((StringBuilder) arg).append(")");
 				}
 			} else if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
+				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 				((StringBuilder) arg).append("ImageOps.clone(");
-				declaration.getExpr().visit(this, arg);
+				addImportStatement("import edu.ufl.cise.plc.runtime.CodeGenHelper;\n");
+				if (declaration.getExpr().getType() == Type.INT) {
+					
+					((StringBuilder) arg).append("CodeGenHelper.setAllPixels(");
+					((StringBuilder) arg).append("new BufferedImage(");
+					declaration.getDim().visit(this, arg);
+					((StringBuilder) arg).append(", BufferedImage.TYPE_INT_RGB),");
+					declaration.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(")");
+					
+				} else if(declaration.getExpr().getType() == Type.FLOAT) {
+					
+					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsFloat(");
+					((StringBuilder) arg).append("new BufferedImage(");
+					declaration.getDim().visit(this, arg);
+					((StringBuilder) arg).append(", BufferedImage.TYPE_INT_RGB),");
+					declaration.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(")");
+					
+				} else if(declaration.getExpr().getType() == Type.COLOR) { 
+					
+					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsColor(");
+					((StringBuilder) arg).append("new BufferedImage(");
+					declaration.getDim().visit(this, arg);
+					((StringBuilder) arg).append(", BufferedImage.TYPE_INT_RGB),");
+					declaration.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(")");
+				} else if(declaration.getExpr().getType() == Type.IMAGE) {
+					declaration.getExpr().visit(this, arg);
+				}
+				
+				
 				((StringBuilder) arg).append(");\n");
 			
 			} else {
@@ -566,7 +603,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		// TODO Auto-generated method stub
 		((StringBuilder) arg).append("ColorTuple.unpack(" + unaryExprPostfix.getExpr().getText() + ".getRGB(");
 		unaryExprPostfix.getSelector().visit(this, arg);
-		((StringBuilder) arg).append(")");
+		((StringBuilder) arg).append("))");
 		return arg;
 
 	}
