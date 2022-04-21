@@ -178,7 +178,8 @@ public class CodeGenVisitor implements ASTVisitor {
 				throw new IllegalArgumentException(
 						"only = and != are valid for strings, this should never run though.");
 			}
-		} else if (binaryExpr.getRight().getType() == Type.COLOR && binaryExpr.getLeft().getType() == Type.COLOR) {
+		} else if ((binaryExpr.getRight().getType() == Type.COLOR || binaryExpr.getRight().getCoerceTo() == Type.COLOR)
+				&& (binaryExpr.getLeft().getType() == Type.COLOR || binaryExpr.getLeft().getCoerceTo() == Type.COLOR)) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 			
 			if(binaryExpr.getOp().getKind() == Kind.EQUALS || binaryExpr.getOp().getKind() == Kind.NOT_EQUALS)
