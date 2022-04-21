@@ -285,20 +285,46 @@ public class CodeGenVisitor implements ASTVisitor {
 
 			} else if (assignmentStatement.getTargetDec().getType() == Type.IMAGE) {
 				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
+				
+				if (assignmentStatement.getSelector() == null) {
+					((StringBuilder) arg).append("ImageOps.clone(");
+					addImportStatement("import edu.ufl.cise.plc.runtime.CodeGenHelper;\n");
+					if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
+						
+						((StringBuilder) arg).append("CodeGenHelper.setAllPixels(" + assignmentStatement.getName() + ", ");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(")");
+						
+					} else if(assignmentStatement.getExpr().getCoerceTo() == Type.FLOAT) {
+						
+						((StringBuilder) arg).append("CodeGenHelper.setAllPixelsFloat(" + assignmentStatement.getName() + ", ");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(")");
+						
+					} else if(assignmentStatement.getExpr().getCoerceTo() == Type.COLOR) { 
+						
+						((StringBuilder) arg).append("CodeGenHelper.setAllPixelsColor(" + assignmentStatement.getName() + ", ");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(")");
+					}
+					((StringBuilder) arg).append(");\n");
+					return arg;
+				}
+				
 				String xVar = assignmentStatement.getSelector().getX().getText();
 				String yVar = assignmentStatement.getSelector().getY().getText();
 				
 				if (assignmentStatement.getTargetDec().getDim() != null) {
+					
+					((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < ");
+					assignmentStatement.getTargetDec().getDim().getWidth().visit(this, arg);
+					((StringBuilder) arg).append("; " + xVar + "++) \n");
+
+					((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < ");
+					assignmentStatement.getTargetDec().getDim().getHeight().visit(this, arg);
+					((StringBuilder) arg).append("; " + yVar + "++) \n");
 
 					if (assignmentStatement.getExpr().getCoerceTo() == Type.COLOR) {
-
-						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < ");
-						assignmentStatement.getTargetDec().getDim().getWidth().visit(this, arg);
-						((StringBuilder) arg).append("; " + xVar + "++) \n");
-
-						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < ");
-						assignmentStatement.getTargetDec().getDim().getHeight().visit(this, arg);
-						((StringBuilder) arg).append("; " + yVar + "++) \n");
 						
 						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
 								+ xVar + ", " + yVar + ", ");
@@ -306,14 +332,6 @@ public class CodeGenVisitor implements ASTVisitor {
 						((StringBuilder) arg).append(");\n");
 
 					} else if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
-
-						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < ");
-						assignmentStatement.getTargetDec().getDim().getWidth().visit(this, arg);
-						((StringBuilder) arg).append("; " + xVar + "++) \n");
-
-						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < ");
-						assignmentStatement.getTargetDec().getDim().getHeight().visit(this, arg);
-						((StringBuilder) arg).append("; " + yVar + "++) \n");
 						
 						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
 								+ xVar + ", " + yVar + ", ColorTuple.unpack(ColorTuple.truncate(");
@@ -323,13 +341,13 @@ public class CodeGenVisitor implements ASTVisitor {
 					}
 				} else {
 
+					((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < "
+							+ assignmentStatement.getName() + ".getWidth(); " + xVar + "++) \n");
+
+					((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < "
+							+ assignmentStatement.getName() + ".getHeight(); " + yVar + "++) \n");
+					
 					if (assignmentStatement.getExpr().getCoerceTo() == Type.COLOR) {
-
-						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < "
-								+ assignmentStatement.getName() + ".getWidth(); " + xVar + "++) \n");
-
-						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < "
-								+ assignmentStatement.getName() + ".getHeight(); " + yVar + "++) \n");
 
 						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
 								+ xVar + ", " + yVar + ", ");
@@ -337,11 +355,6 @@ public class CodeGenVisitor implements ASTVisitor {
 						((StringBuilder) arg).append(");");
 
 					} else if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
-						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < "
-								+ assignmentStatement.getName() + ".getWidth(); " + xVar + "++) \n");
-
-						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < "
-								+ assignmentStatement.getName() + ".getHeight(); " + yVar + "++) \n");
 
 						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
 								+ xVar + ", " + yVar + ", ColorTuple.unpack(ColorTuple.truncate(");
