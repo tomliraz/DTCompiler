@@ -179,7 +179,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		} else if (binaryExpr.getRight().getType() == Type.COLOR && binaryExpr.getLeft().getType() == Type.COLOR) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
 			((StringBuilder) arg)
-					.append("ImageOps.binaryTupleOp(ImageOps.OP." + binaryExpr.getOp().getKind().toString() + ", ");
+					.append("ImageOps.binaryTupleOp(ImageOps.BoolOP." + binaryExpr.getOp().getKind().toString() + ", ");
 			binaryExpr.getLeft().visit(this, arg);
 			((StringBuilder) arg).append(", ");
 			binaryExpr.getRight().visit(this, arg);
@@ -538,7 +538,7 @@ public class CodeGenVisitor implements ASTVisitor {
 					((StringBuilder) arg).append(")");
 				}
 			} else if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
-				((StringBuilder) arg).append(declaration.getName() + " = ImageOps.clone(");
+				((StringBuilder) arg).append("ImageOps.clone(");
 				declaration.getExpr().visit(this, arg);
 				((StringBuilder) arg).append(");\n");
 			
