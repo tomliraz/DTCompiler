@@ -441,7 +441,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
 		if (program.getReturnType() == Type.STRING) {
 			code.append("public class " + program.getName() + " {\n" + "\tpublic static String apply(");
+		} else if (program.getReturnType() == Type.IMAGE) {
+			code.append("public class " + program.getName() + " {\n" + "\tpublic static BufferedImage apply(");
 		} else {
+		
+
 			code.append("public class " + program.getName() + " {\n" + "\tpublic static "
 					+ program.getReturnType().name().toLowerCase() + " apply(");
 		}
