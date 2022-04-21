@@ -103,7 +103,7 @@ public class CodeGenVisitor implements ASTVisitor {
 		case COLOR -> "ColorTuple";
 		// case Type.CONSOLE-> "";
 		case FLOAT -> "Float";
-		// case Type.IMAGE -> ;
+		case IMAGE -> "BufferedImage";
 		case INT -> "Integer";
 		case STRING -> "String";
 		// case Type.VOID -> ;
@@ -113,6 +113,9 @@ public class CodeGenVisitor implements ASTVisitor {
 		if (coerceType.equals("ColorTuple"))
 			((StringBuilder) arg).append("( " + coerceType + ") " + "ConsoleIO.readValueFromConsole( \""
 					+ consoleExpr.getCoerceTo().name() + "\", \"Enter Red, Green, and Blue values:\")");
+		else if( coerceType.equals("BufferedImage")) {
+			((StringBuilder) arg).append("(String) " + "ConsoleIO.readValueFromConsole( \"STRING\", \"Enter URL:\")");
+		}
 		else
 			((StringBuilder) arg).append("( " + coerceType + ") " + "ConsoleIO.readValueFromConsole( \""
 					+ consoleExpr.getCoerceTo().name() + "\", \"Enter " + coerceType + ":\")");
@@ -458,7 +461,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-		((StringBuilder) arg).append(readStatement.getName() + " = ");
+		((StringBuilder) arg).append(readStatement.getName());
 
 		if (readStatement.getTargetDec().getType() == Type.IMAGE) {
 			((StringBuilder) arg).append(" = FileURLIO.readImage(");
@@ -471,7 +474,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
 			((StringBuilder) arg).append(");\nFileURLIO.closeFiles()");
 		} else {
-			readStatement.getSource().visit(this, arg);
+			if (readStatement.getSource().getType() == Type.CONSOLE) {
+				((StringBuilder) arg).append(" = ");
+				readStatement.getSource().visit(this, arg);
+				
+			} else {
+				((StringBuilder) arg).append(" = readValueFromFile(");
+				readStatement.getSource().visit(this, arg);
+				((StringBuilder) arg).append(");\nFileURLIO.closeFiles()");
+			}
+			
 		}
 		((StringBuilder) arg).append(";\n");
 		return arg;
@@ -570,7 +582,7 @@ public class CodeGenVisitor implements ASTVisitor {
 			((StringBuilder) arg).append(" = ");
 			if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.LARROW) {
 				addImportStatement("import edu.ufl.cise.plc.runtime.FileURLIO;\n");
-
+				
 				if (declaration.getNameDef().getDim() == null) {
 					((StringBuilder) arg).append("FileURLIO.readImage(");
 					declaration.getExpr().visit(this, arg);
@@ -630,8 +642,25 @@ public class CodeGenVisitor implements ASTVisitor {
 			}
 		} else {
 			if (declaration.getOp() != null) {
-				((StringBuilder) arg).append(" = ");
-				declaration.getExpr().visit(this, arg);
+				if (declaration.getOp().getKind() == Kind.ASSIGN) {
+					((StringBuilder) arg).append(" = ");
+					declaration.getExpr().visit(this, arg);
+				} else {
+					addImportStatement("import edu.ufl.cise.plc.runtime.FileURLIO;\n");
+					if ( declaration.getType() == Type.STRING ) {
+						((StringBuilder) arg).append(" = (String)FileURLIO.readValueFromFile(");
+					} else if ( declaration.getType() == Type.COLOR ) {
+						((StringBuilder) arg).append(" = (ColorTuple)FileURLIO.readValueFromFile(");
+					} else if ( declaration.getType() == Type.COLORFLOAT ) {
+						((StringBuilder) arg).append(" = (ColorTupleFloat)FileURLIO.readValueFromFile(");
+					} else {
+						((StringBuilder) arg).append(" = (" + declaration.getType().toString().toLowerCase() + ")FileURLIO.readValueFromFile(");
+					}
+					
+					declaration.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(");\nFileURLIO.closeFiles()");
+				}
+				
 			}
 		}
 		((StringBuilder) arg).append(";\n");
