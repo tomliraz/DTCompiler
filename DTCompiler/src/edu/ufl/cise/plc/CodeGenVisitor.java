@@ -180,16 +180,29 @@ public class CodeGenVisitor implements ASTVisitor {
 			}
 		} else if (binaryExpr.getRight().getType() == Type.COLOR && binaryExpr.getLeft().getType() == Type.COLOR) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
-			((StringBuilder) arg)
+			
+			if(binaryExpr.getOp().getKind() == Kind.EQUALS || binaryExpr.getOp().getKind() == Kind.NOT_EQUALS)
+				((StringBuilder) arg)
 					.append("ImageOps.binaryTupleOp(ImageOps.BoolOP." + binaryExpr.getOp().getKind().toString() + ", ");
+			else
+				((StringBuilder) arg)
+					.append("ImageOps.binaryTupleOp(ImageOps.OP." + binaryExpr.getOp().getKind().toString() + ", ");
+				
 			binaryExpr.getLeft().visit(this, arg);
 			((StringBuilder) arg).append(", ");
 			binaryExpr.getRight().visit(this, arg);
 			((StringBuilder) arg).append(")");
 		} else if (binaryExpr.getRight().getType() == Type.IMAGE && binaryExpr.getLeft().getType() == Type.IMAGE) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps;\n");
-			((StringBuilder) arg)
+			addImportStatement("import edu.ufl.cise.plc.runtime.CodeGenHelper;\n");
+			
+			if(binaryExpr.getOp().getKind() == Kind.EQUALS || binaryExpr.getOp().getKind() == Kind.NOT_EQUALS)
+				((StringBuilder) arg)
+					.append("CodeGenHelper.binaryImageImageOp(ImageOps.BoolOP." + binaryExpr.getOp().getKind().toString());
+			else
+				((StringBuilder) arg)
 					.append("ImageOps.binaryImageImageOp(ImageOps.OP." + binaryExpr.getOp().getKind().toString());
+			
 			((StringBuilder) arg).append(", ");
 			binaryExpr.getLeft().visit(this, arg);
 			((StringBuilder) arg).append(", ");
