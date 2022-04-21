@@ -575,7 +575,7 @@ public class CodeGenVisitor implements ASTVisitor {
 				addImportStatement("import edu.ufl.cise.plc.runtime.CodeGenHelper;\n");
 				if (declaration.getExpr().getType() == Type.INT) {
 					
-					((StringBuilder) arg).append("CodeGenHelper.setAllPixels(");
+					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsColor(");
 					((StringBuilder) arg).append("new BufferedImage(");
 					declaration.getDim().visit(this, arg);
 					((StringBuilder) arg).append(", BufferedImage.TYPE_INT_RGB),");
@@ -584,7 +584,7 @@ public class CodeGenVisitor implements ASTVisitor {
 					
 				} else if(declaration.getExpr().getType() == Type.FLOAT) {
 					
-					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsFloat(");
+					((StringBuilder) arg).append("CodeGenHelper.setAllPixelsColorFloat(");
 					((StringBuilder) arg).append("new BufferedImage(");
 					declaration.getDim().visit(this, arg);
 					((StringBuilder) arg).append(", BufferedImage.TYPE_INT_RGB),");
