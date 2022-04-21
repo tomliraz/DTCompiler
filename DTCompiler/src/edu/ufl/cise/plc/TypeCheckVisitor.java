@@ -419,11 +419,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 		if (declaration.getExpr() != null) {
 			right = (Type) declaration.getExpr().visit(this, arg);
 		}
-
-		if (left == Type.IMAGE) {
+		
+		if (left == Type.IMAGE && (declaration.getOp() == null || declaration.getOp().getKind() == Kind.ASSIGN)) {
 			check(right == Type.IMAGE || declaration.getDim() != null, declaration,
 					"images must have a dimension or image for initialization");
 		}
+		
+		
 		if (declaration.getDim() != null)
 			declaration.getDim().visit(this, arg);
 
