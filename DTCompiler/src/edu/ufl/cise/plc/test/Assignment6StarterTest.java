@@ -17,6 +17,7 @@ import edu.ufl.cise.plc.TypeCheckException;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.Program;
 import edu.ufl.cise.plc.runtime.ColorTuple;
+import edu.ufl.cise.plc.runtime.ColorTupleFloat;
 import edu.ufl.cise.plc.runtime.ConsoleIO;
 import edu.ufl.cise.plc.runtime.FileURLIO;
 import edu.ufl.cise.plc.runtime.ImageOps;

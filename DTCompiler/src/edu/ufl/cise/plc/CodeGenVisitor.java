@@ -82,9 +82,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
-		// return arg;
+		addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
+		addImportStatement("import java.awt.Color;\n");
+
+		((StringBuilder) arg).append("ColorTuple.unpack(Color." + colorConstExpr.getText() + ".getRGB())"); // this
+																											// might not
+																											// work
+
+		return arg;
 	}
 
 	@Override
@@ -116,9 +121,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
-		// return arg;
+		addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
+		((StringBuilder) arg).append("new ColorTuple(");
+		colorExpr.getRed().visit(this, arg);
+		((StringBuilder) arg).append(", ");
+		colorExpr.getGreen().visit(this, arg);
+		((StringBuilder) arg).append(", ");
+		colorExpr.getBlue().visit(this, arg);
+		((StringBuilder) arg).append(")");
+
+		return arg;
 	}
 
 	@Override
@@ -242,53 +254,156 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitDimension(Dimension dimension, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
-		// return arg;
+		addImportStatement("import edu.ufl.cise.plc.runtime.ColorTuple;\n");
+
+		dimension.getWidth().visit(this, arg);
+		((StringBuilder) arg).append(", ");
+		dimension.getHeight().visit(this, arg);
+
+		return arg;
 	}
 
 	@Override
 	public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
-		// return arg;
+		pixelSelector.getX().visit(this, arg);
+		((StringBuilder) arg).append(", ");
+		pixelSelector.getY().visit(this, arg);
+		return arg;
 	}
 
 	@Override
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-		((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
+
 		if (assignmentStatement.getExpr().getCoerceTo() != null) {
 			if (assignmentStatement.getExpr().getCoerceTo() == Type.STRING) {
+				((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
 				((StringBuilder) arg).append("(String) ");
+				assignmentStatement.getExpr().visit(this, arg);
+				((StringBuilder) arg).append(";\n");
+
+			} else if (assignmentStatement.getTargetDec().getType() == Type.IMAGE) {
+				String xVar = assignmentStatement.getSelector().getX().getText();
+				String yVar = assignmentStatement.getSelector().getY().getText();
+				
+				if (assignmentStatement.getTargetDec().getDim() != null) {
+
+					if (assignmentStatement.getExpr().getCoerceTo() == Type.COLOR) {
+
+						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < ");
+						assignmentStatement.getTargetDec().getDim().getWidth().visit(this, arg);
+						((StringBuilder) arg).append("; " + xVar + "++) \n");
+
+						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < ");
+						assignmentStatement.getTargetDec().getDim().getHeight().visit(this, arg);
+						((StringBuilder) arg).append("; " + yVar + "++) \n");
+						
+						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
+								+ xVar + ", " + yVar + ", ");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(");");
+
+					} else if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
+
+						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < ");
+						assignmentStatement.getTargetDec().getDim().getWidth().visit(this, arg);
+						((StringBuilder) arg).append("; " + xVar + "++) \n");
+
+						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < ");
+						assignmentStatement.getTargetDec().getDim().getHeight().visit(this, arg);
+						((StringBuilder) arg).append("; " + yVar + "++) \n");
+						
+						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
+								+ xVar + ", " + yVar + ", ColorTuple.unpack(ColorTuple.truncate(");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(")));");
+
+					}
+				} else {
+
+					if (assignmentStatement.getExpr().getCoerceTo() == Type.COLOR) {
+
+						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < "
+								+ assignmentStatement.getName() + ".getWidth(); " + xVar + "++) \n");
+
+						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < "
+								+ assignmentStatement.getName() + ".getHeight(); " + yVar + "++) \n");
+
+						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
+								+ xVar + ", " + yVar + ", ");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(");");
+
+					} else if (assignmentStatement.getExpr().getCoerceTo() == Type.INT) {
+						((StringBuilder) arg).append("for (int " + xVar + " = 0; " + xVar + " < "
+								+ assignmentStatement.getName() + ".getWidth(); " + xVar + "++) \n");
+
+						((StringBuilder) arg).append("\tfor (int " + yVar + " = 0; " + yVar + " < "
+								+ assignmentStatement.getName() + ".getHeight(); " + yVar + "++) \n");
+
+						((StringBuilder) arg).append("\t\tImageOps.setColor(" + assignmentStatement.getName() + ", "
+								+ xVar + ", " + yVar + ", ColorTuple.unpack(ColorTuple.truncate(");
+						assignmentStatement.getExpr().visit(this, arg);
+						((StringBuilder) arg).append(")));");
+
+					} else {
+						throw new IllegalArgumentException("this is not possible?");
+					}
+				}
+
 			} else {
+
+				((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
 				((StringBuilder) arg)
 						.append("(" + assignmentStatement.getExpr().getCoerceTo().name().toLowerCase() + ") ");
+				assignmentStatement.getExpr().visit(this, arg);
+				((StringBuilder) arg).append(";\n");
+			}
+		} else {
+
+			if (assignmentStatement.getTargetDec().getType() == Type.IMAGE) {
+				addImportStatement("import edu.ufl.cise.plc.runtime.ImageOps");
+				if (assignmentStatement.getTargetDec().getDim() != null) {
+
+					((StringBuilder) arg).append(assignmentStatement.getName() + " = ImageOps.resize(ImageOps.clone(");
+					assignmentStatement.getExpr().visit(this, arg);
+					((StringBuilder) arg).append("), ");
+					assignmentStatement.getTargetDec().getDim().visit(this, arg);
+					((StringBuilder) arg).append(");\n");
+
+				} else {
+					((StringBuilder) arg).append(assignmentStatement.getName() + " = ImageOps.clone(");
+					assignmentStatement.getExpr().visit(this, arg);
+					((StringBuilder) arg).append(");\n");
+
+				}
+			} else {
+				((StringBuilder) arg).append(assignmentStatement.getName() + " = ");
+				assignmentStatement.getExpr().visit(this, arg);
+				((StringBuilder) arg).append(";\n");
 			}
 		}
-		assignmentStatement.getExpr().visit(this, arg);
-		((StringBuilder) arg).append(";\n");
 		return arg;
 	}
 
 	@Override
 	public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
-		
-		if(writeStatement.getSource().getType() == Type.IMAGE && writeStatement.getDest().getType() == Type.CONSOLE) {
+
+		if (writeStatement.getSource().getType() == Type.IMAGE && writeStatement.getDest().getType() == Type.CONSOLE) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ConsoleIO;\n");
 			((StringBuilder) arg).append("ConsoleIO.displayImageOnScreen(" + writeStatement.getSource().getText());
 			((StringBuilder) arg).append(")");
-		} else if(writeStatement.getSource().getType() == Type.IMAGE && writeStatement.getDest().getType() == Type.STRING) {
+		} else if (writeStatement.getSource().getType() == Type.IMAGE
+				&& writeStatement.getDest().getType() == Type.STRING) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.FileURLIO;\n");
 			((StringBuilder) arg).append("FileURLIO.writeImage(" + writeStatement.getSource().getText());
 			((StringBuilder) arg).append(", " + writeStatement.getDest().getText());
 			((StringBuilder) arg).append(")");
-		} else if(writeStatement.getDest().getType() == Type.STRING) {
+		} else if (writeStatement.getDest().getType() == Type.STRING) {
 			addImportStatement("import edu.ufl.cise.plc.runtime.FileURLIO;\n");
 			((StringBuilder) arg).append("FileURLIO.writeValue(" + writeStatement.getSource().getText());
 			((StringBuilder) arg).append(", " + writeStatement.getDest().getText());
 			((StringBuilder) arg).append(")");
-		}
-		else {
+		} else {
 			addImportStatement("import edu.ufl.cise.plc.runtime.ConsoleIO;\n");
 			((StringBuilder) arg).append("ConsoleIO.console.println(");
 			writeStatement.getSource().visit(this, arg);
@@ -305,12 +420,12 @@ public class CodeGenVisitor implements ASTVisitor {
 		if (readStatement.getTargetDec().getType() == Type.IMAGE) {
 			((StringBuilder) arg).append(" = FileURLIO.readImage(");
 			readStatement.getSource().visit(this, arg);
-			
+
 			if (readStatement.getTargetDec().getDim() != null) {
 				((StringBuilder) arg).append(", ");
 				readStatement.getTargetDec().getDim().visit(this, arg);
 			}
-			
+
 			((StringBuilder) arg).append(");\nFileURLIO.closeFiles()");
 		} else {
 			readStatement.getSource().visit(this, arg);
@@ -373,7 +488,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitNameDefWithDim(NameDefWithDim nameDefWithDim, Object arg) throws Exception {
-		return visitNameDef(nameDefWithDim, arg);
+		return visitNameDef(nameDefWithDim, arg); // maybe u add the dimension after this part?????
 	}
 
 	@Override
@@ -439,8 +554,10 @@ public class CodeGenVisitor implements ASTVisitor {
 	@Override
 	public Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception {
 		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("thats messed up, this isnt in this assignment. -_-");
-		// return arg;
+		((StringBuilder) arg).append("ColorTuple.unpack(" + unaryExprPostfix.getExpr().getText() + ".getRGB(");
+		unaryExprPostfix.getSelector().visit(this, arg);
+		((StringBuilder) arg).append(")");
+		return arg;
 
 	}
 
